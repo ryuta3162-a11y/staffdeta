@@ -3,10 +3,26 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { compressImage } from "@/lib/compressImage";
 
 interface ReportFormProps {
   storeName: string;
   staffName: string;
+}
+
+async function parseApiResponse(response: Response) {
+  const text = await response.text();
+
+  try {
+    return JSON.parse(text) as { error?: string; success?: boolean };
+  } catch {
+    if (response.status === 413 || text.includes("Request Entity Too Large")) {
+      throw new Error(
+        "写真が大きすぎます。別の写真を選ぶか、写真なしで送信してください。",
+      );
+    }
+    throw new Error("送信に失敗しました。時間をおいて再度お試しください。");
+  }
 }
 
 export function ReportForm({ storeName, staffName }: ReportFormProps) {
@@ -18,13 +34,34 @@ export function ReportForm({ storeName, staffName }: ReportFormProps) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [photoLoading, setPhotoLoading] = useState(false);
 
-  function handlePhotoChange(file: File | null) {
-    setPhoto(file);
+  function clearPreview() {
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
     }
-    setPreviewUrl(file ? URL.createObjectURL(file) : null);
+    setPreviewUrl(null);
+  }
+
+  async function handlePhotoChange(file: File | null) {
+    setError("");
+    clearPreview();
+    setPhoto(null);
+
+    if (!file) {
+      return;
+    }
+
+    setPhotoLoading(true);
+    try {
+      const compressed = await compressImage(file);
+      setPhoto(compressed);
+      setPreviewUrl(URL.createObjectURL(compressed));
+    } catch {
+      setError("写真の読み込みに失敗しました。別の写真を選んでください。");
+    } finally {
+      setPhotoLoading(false);
+    }
   }
 
   async function handleLogout() {
@@ -43,8 +80,10 @@ export function ReportForm({ storeName, staffName }: ReportFormProps) {
       const formData = new FormData();
       formData.append("impression", impression);
       formData.append("message", message);
+
       if (photo) {
-        formData.append("photo", photo);
+        const compressed = await compressImage(photo);
+        formData.append("photo", compressed);
       }
 
       const response = await fetch("/api/report", {
@@ -52,14 +91,15 @@ export function ReportForm({ storeName, staffName }: ReportFormProps) {
         body: formData,
       });
 
-      const data = await response.json();
+      const data = await parseApiResponse(response);
       if (!response.ok) {
         throw new Error(data.error || "送信に失敗しました");
       }
 
       setImpression("");
       setMessage("");
-      handlePhotoChange(null);
+      clearPreview();
+      setPhoto(null);
       setSuccess(true);
     } catch (submitError) {
       setError(
@@ -110,12 +150,18 @@ export function ReportForm({ storeName, staffName }: ReportFormProps) {
             type="file"
             accept="image/*"
             capture="environment"
+            disabled={photoLoading || loading}
             onChange={(event) =>
-              handlePhotoChange(event.target.files?.[0] || null)
+              void handlePhotoChange(event.target.files?.[0] || null)
             }
             className="block w-full rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-700 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-600 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-emerald-700"
           />
-          <p className="mt-2 text-xs text-slate-500">任意・5MB以下・スマホから撮影もOK</p>
+          <p className="mt-2 text-xs text-slate-500">
+            任意・スマホの写真も自動で軽くなります
+          </p>
+          {photoLoading && (
+            <p className="mt-2 text-xs text-emerald-700">写真を準備中...</p>
+          )}
           {previewUrl && (
             <div className="mt-4 overflow-hidden rounded-xl border border-slate-200">
               <Image
@@ -153,7 +199,7 @@ export function ReportForm({ storeName, staffName }: ReportFormProps) {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || photoLoading}
           className="w-full rounded-xl bg-emerald-600 px-4 py-3 font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? "送信中..." : "送信する"}

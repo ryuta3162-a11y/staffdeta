@@ -38,9 +38,9 @@ export async function POST(request: Request) {
         );
       }
 
-      if (photo.size > 5 * 1024 * 1024) {
+      if (photo.size > 3 * 1024 * 1024) {
         return NextResponse.json(
-          { error: "写真は5MB以下にしてください" },
+          { error: "写真が大きすぎます。もう一度選び直してください。" },
           { status: 400 },
         );
       }
