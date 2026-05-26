@@ -4,7 +4,7 @@
  */
 
 const CONFIG = {
-  REPORT_SHEET: "シート1",
+  REPORT_SHEET: "所感",
   STAFF_SHEET: "スタッフ",
 };
 
