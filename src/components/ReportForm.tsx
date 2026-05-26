@@ -28,8 +28,7 @@ async function parseApiResponse(response: Response) {
 }
 
 export function ReportForm({ storeName, staffName }: ReportFormProps) {
-  const [impression, setImpression] = useState("");
-  const [message, setMessage] = useState("");
+  const [report, setReport] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -73,8 +72,7 @@ export function ReportForm({ storeName, staffName }: ReportFormProps) {
 
     try {
       const formData = new FormData();
-      formData.append("impression", impression);
-      formData.append("message", message);
+      formData.append("report", report);
 
       if (photo) {
         const compressed = await compressImage(photo);
@@ -91,8 +89,7 @@ export function ReportForm({ storeName, staffName }: ReportFormProps) {
         throw new Error(data.error || "送信に失敗しました");
       }
 
-      setImpression("");
-      setMessage("");
+      setReport("");
       clearPreview();
       setPhoto(null);
       setSuccess(true);
@@ -109,7 +106,7 @@ export function ReportForm({ storeName, staffName }: ReportFormProps) {
     <div className="w-full">
       <PageHeader
         title="ナイスプレーシェア"
-        description="今日の良かったこと、ナイスプレーを記録してください。"
+        description="取り組んだことと、出た成果を報告する場所です。"
         meta={
           <>
             <span className="font-medium text-[var(--ink)]">{storeName}</span>
@@ -123,20 +120,22 @@ export function ReportForm({ storeName, staffName }: ReportFormProps) {
       <form onSubmit={handleSubmit} className="card p-6 sm:p-8">
         <div className="space-y-6">
           <FormSection
-            step="01"
-            label="所感"
-            hint="今日のナイスプレー、良かった出来事を書いてください"
+            step="①"
+            label="アピールポイント"
+            hint="どんな取り組みをして、どんな成果が出たかを書いてください"
           >
             <textarea
-              value={impression}
-              onChange={(event) => setImpression(event.target.value)}
-              className="field-input min-h-36 resize-y"
-              placeholder="例：お客様に「ありがとう」と言っていただけました"
+              value={report}
+              onChange={(event) => setReport(event.target.value)}
+              className="field-input min-h-44 resize-y leading-relaxed"
+              placeholder={
+                "例：接客の声かけを増やした結果、お客様から「気持ちよく過ごせた」とお声をいただけました"
+              }
               required
             />
           </FormSection>
 
-          <FormSection step="02" label="写真" hint="任意・スマホの写真も自動で軽くなります">
+          <FormSection step="②" label="写真" hint="任意">
             <label className="block cursor-pointer rounded-xl border border-dashed border-[var(--border)] bg-[var(--accent-soft)]/30 px-4 py-5 text-center transition hover:bg-[var(--accent-soft)]/50">
               <input
                 type="file"
@@ -152,7 +151,7 @@ export function ReportForm({ storeName, staffName }: ReportFormProps) {
                 写真を選ぶ
               </span>
               <span className="mt-1 block text-[0.8125rem] text-[var(--muted)]">
-                タップして撮影または選択
+                なくても送信できます
               </span>
             </label>
 
@@ -174,16 +173,6 @@ export function ReportForm({ storeName, staffName }: ReportFormProps) {
                 />
               </div>
             )}
-          </FormSection>
-
-          <FormSection step="03" label="文面" hint="共有用のメッセージを書いてください">
-            <textarea
-              value={message}
-              onChange={(event) => setMessage(event.target.value)}
-              className="field-input min-h-36 resize-y"
-              placeholder="例：チームの励みになる一言を"
-              required
-            />
           </FormSection>
         </div>
 

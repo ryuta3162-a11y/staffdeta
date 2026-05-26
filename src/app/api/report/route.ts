@@ -10,24 +10,21 @@ export async function POST(request: Request) {
     }
 
     const formData = await request.formData();
-    const impression = String(formData.get("impression") || "").trim();
-    const message = String(formData.get("message") || "").trim();
+    const report = String(formData.get("report") || "").trim();
     const photo = formData.get("photo");
 
-    if (!impression) {
-      return NextResponse.json({ error: "所感を入力してください" }, { status: 400 });
-    }
-
-    if (!message) {
-      return NextResponse.json({ error: "文面を入力してください" }, { status: 400 });
+    if (!report) {
+      return NextResponse.json(
+        { error: "アピールポイントを入力してください" },
+        { status: 400 },
+      );
     }
 
     const payload: Record<string, unknown> = {
       action: "submit",
       storeName: session.storeName,
       staffName: session.staffName,
-      impression,
-      message,
+      report,
     };
 
     if (photo instanceof File && photo.size > 0) {
