@@ -12,6 +12,14 @@ interface ReportFormProps {
   staffName: string;
 }
 
+interface PhotoItem {
+  id: string;
+  file: File;
+  previewUrl: string;
+}
+
+const MAX_PHOTOS = 5;
+
 async function parseApiResponse(response: Response) {
   const text = await response.text();
 
@@ -20,7 +28,7 @@ async function parseApiResponse(response: Response) {
   } catch {
     if (response.status === 413 || text.includes("Request Entity Too Large")) {
       throw new Error(
-        "写真が大きすぎます。別の写真を選ぶか、写真なしで送信してください。",
+        "写真が大きすぎます。枚数を減らすか、写真なしで送信してください。",
       );
     }
     throw new Error("送信に失敗しました。時間をおいて再度お試しください。");
@@ -29,38 +37,65 @@ async function parseApiResponse(response: Response) {
 
 export function ReportForm({ storeName, staffName }: ReportFormProps) {
   const [impression, setImpression] = useState("");
-  const [photo, setPhoto] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [photos, setPhotos] = useState<PhotoItem[]>([]);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [photoLoading, setPhotoLoading] = useState(false);
 
-  function handlePhotoInputChange(file: File | null) {
-    void handlePhotoChange(file);
-  }
-
-  function clearPreview() {
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
+  function revokePhotos(items: PhotoItem[]) {
+    for (const item of items) {
+      URL.revokeObjectURL(item.previewUrl);
     }
-    setPreviewUrl(null);
   }
 
-  async function handlePhotoChange(file: File | null) {
-    setError("");
-    clearPreview();
-    setPhoto(null);
+  function clearPhotos() {
+    revokePhotos(photos);
+    setPhotos([]);
+  }
 
-    if (!file) {
+  function removePhoto(id: string) {
+    setPhotos((current) => {
+      const target = current.find((item) => item.id === id);
+      if (target) {
+        URL.revokeObjectURL(target.previewUrl);
+      }
+      return current.filter((item) => item.id !== id);
+    });
+  }
+
+  async function addPhotos(files: FileList | File[]) {
+    const fileArray = Array.from(files).filter((file) => file.type.startsWith("image/"));
+    if (fileArray.length === 0) {
+      setError("画像ファイルを選択してください");
       return;
+    }
+
+    const remaining = MAX_PHOTOS - photos.length;
+    if (remaining <= 0) {
+      setError(`写真は最大${MAX_PHOTOS}枚まで添付できます`);
+      return;
+    }
+
+    const selected = fileArray.slice(0, remaining);
+    if (fileArray.length > remaining) {
+      setError(`写真は最大${MAX_PHOTOS}枚までです。${remaining}枚だけ追加しました`);
+    } else {
+      setError("");
     }
 
     setPhotoLoading(true);
     try {
-      const compressed = await compressImage(file);
-      setPhoto(compressed);
-      setPreviewUrl(URL.createObjectURL(compressed));
+      const newItems: PhotoItem[] = [];
+      for (const file of selected) {
+        const compressed = await compressImage(file);
+        newItems.push({
+          id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          file: compressed,
+          previewUrl: URL.createObjectURL(compressed),
+        });
+      }
+      setPhotos((current) => [...current, ...newItems]);
     } catch {
       setError("写真の読み込みに失敗しました。別の写真を選んでください。");
     } finally {
@@ -78,9 +113,9 @@ export function ReportForm({ storeName, staffName }: ReportFormProps) {
       const formData = new FormData();
       formData.append("impression", impression);
 
-      if (photo) {
-        const compressed = await compressImage(photo);
-        formData.append("photo", compressed);
+      for (const item of photos) {
+        const compressed = await compressImage(item.file);
+        formData.append("photos", compressed);
       }
 
       const response = await fetch("/api/report", {
@@ -94,8 +129,7 @@ export function ReportForm({ storeName, staffName }: ReportFormProps) {
       }
 
       setImpression("");
-      clearPreview();
-      setPhoto(null);
+      clearPhotos();
       setSuccess(true);
     } catch (submitError) {
       setError(
@@ -140,7 +174,7 @@ export function ReportForm({ storeName, staffName }: ReportFormProps) {
           <FormSection
             step="②"
             label="写真"
-            hint="BeforeAfterや成果物があれば添付してください"
+            hint="BeforeAfterや成果物があれば添付してください（複数可）"
           >
             <div className="upload-actions">
               <label className="upload-btn">
@@ -148,24 +182,30 @@ export function ReportForm({ storeName, staffName }: ReportFormProps) {
                   type="file"
                   accept="image/*"
                   capture="environment"
-                  disabled={photoLoading || loading}
+                  disabled={photoLoading || loading || photos.length >= MAX_PHOTOS}
                   onChange={(event) => {
-                    handlePhotoInputChange(event.target.files?.[0] || null);
+                    const file = event.target.files?.[0];
+                    if (file) {
+                      void addPhotos([file]);
+                    }
                     event.target.value = "";
                   }}
                   className="sr-only"
                 />
                 <span className="upload-btn-title">カメラで撮影</span>
-                <span className="upload-btn-desc">カメラを起動</span>
+                <span className="upload-btn-desc">1枚ずつ追加</span>
               </label>
 
               <label className="upload-btn">
                 <input
                   type="file"
                   accept="image/*"
-                  disabled={photoLoading || loading}
+                  multiple
+                  disabled={photoLoading || loading || photos.length >= MAX_PHOTOS}
                   onChange={(event) => {
-                    handlePhotoInputChange(event.target.files?.[0] || null);
+                    if (event.target.files?.length) {
+                      void addPhotos(event.target.files);
+                    }
                     event.target.value = "";
                   }}
                   className="sr-only"
@@ -176,7 +216,7 @@ export function ReportForm({ storeName, staffName }: ReportFormProps) {
             </div>
 
             <p className="mt-3 text-center text-[0.8125rem] font-medium text-[var(--muted)]">
-              任意・なくても送信できます
+              任意・最大{MAX_PHOTOS}枚（{photos.length}/{MAX_PHOTOS}）
             </p>
 
             {photoLoading && (
@@ -185,16 +225,28 @@ export function ReportForm({ storeName, staffName }: ReportFormProps) {
               </p>
             )}
 
-            {previewUrl && (
-              <div className="mt-4 overflow-hidden rounded-xl border border-[var(--border)]">
-                <Image
-                  src={previewUrl}
-                  alt="選択した写真のプレビュー"
-                  width={800}
-                  height={600}
-                  unoptimized
-                  className="h-auto max-h-72 w-full object-cover"
-                />
+            {photos.length > 0 && (
+              <div className="photo-grid mt-4">
+                {photos.map((item) => (
+                  <div key={item.id} className="photo-preview">
+                    <Image
+                      src={item.previewUrl}
+                      alt="選択した写真"
+                      width={400}
+                      height={300}
+                      unoptimized
+                      className="h-full w-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removePhoto(item.id)}
+                      className="photo-remove"
+                      aria-label="写真を削除"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
           </FormSection>

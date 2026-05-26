@@ -181,7 +181,22 @@ function submitReport_(data) {
   }
 
   let photoUrl = "";
-  if (data.photoBase64 && data.photoMimeType) {
+  if (data.photos && data.photos.length) {
+    const urls = [];
+    for (var i = 0; i < data.photos.length; i++) {
+      var photo = data.photos[i];
+      urls.push(
+        uploadPhoto_(
+          photo.photoBase64,
+          photo.photoMimeType,
+          photo.photoFileName || "photo" + (i + 1) + ".jpg",
+          storeName,
+          staffName,
+        ),
+      );
+    }
+    photoUrl = urls.join("\n");
+  } else if (data.photoBase64 && data.photoMimeType) {
     photoUrl = uploadPhoto_(
       data.photoBase64,
       data.photoMimeType,

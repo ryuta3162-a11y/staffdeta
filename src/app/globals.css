@@ -190,6 +190,38 @@ select.field-input {
   color: var(--muted);
 }
 
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.photo-preview {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  border: 1.5px solid #cccccc;
+  border-radius: 0.5rem;
+}
+
+.photo-remove {
+  position: absolute;
+  top: 0.375rem;
+  right: 0.375rem;
+  display: flex;
+  height: 1.75rem;
+  width: 1.75rem;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.65);
+  font-size: 1rem;
+  line-height: 1;
+  color: #fff;
+  cursor: pointer;
+}
+
 .upload-zone {
   border: 1.5px dashed #aaaaaa;
   border-radius: 0.5rem;
