@@ -2,8 +2,10 @@
 
 import Image from "next/image";
 import { FormEvent, useState } from "react";
-import { compressImage } from "@/lib/compressImage";
+import { FormSection } from "@/components/FormSection";
 import { LogoutButton } from "@/components/LogoutButton";
+import { PageHeader } from "@/components/PageHeader";
+import { compressImage } from "@/lib/compressImage";
 
 interface ReportFormProps {
   storeName: string;
@@ -104,90 +106,94 @@ export function ReportForm({ storeName, staffName }: ReportFormProps) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl">
-      <div className="mb-6 flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm font-medium text-emerald-700">Nice Place Share</p>
-          <h1 className="mt-1 text-3xl font-bold text-slate-900">ナイスプレーシェア</h1>
-          <p className="mt-2 text-sm text-slate-600">
-            {storeName} / {staffName}
-          </p>
-        </div>
-        <LogoutButton />
-      </div>
+    <div className="w-full">
+      <PageHeader
+        title="ナイスプレーシェア"
+        description="今日の良かったこと、ナイスプレーを記録してください。"
+        meta={
+          <>
+            <span className="font-medium text-[var(--ink)]">{storeName}</span>
+            <span className="text-[var(--border)]">|</span>
+            <span>{staffName}</span>
+          </>
+        }
+        action={<LogoutButton />}
+      />
 
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
-      >
-        <label className="block">
-          <span className="mb-1 block text-sm font-medium text-slate-700">所感</span>
-          <textarea
-            value={impression}
-            onChange={(event) => setImpression(event.target.value)}
-            className="min-h-32 w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-            placeholder="今日のナイスプレー、良かった出来事を書いてください"
-            required
-          />
-        </label>
+      <form onSubmit={handleSubmit} className="card p-6 sm:p-8">
+        <div className="space-y-6">
+          <FormSection
+            step="01"
+            label="所感"
+            hint="今日のナイスプレー、良かった出来事を書いてください"
+          >
+            <textarea
+              value={impression}
+              onChange={(event) => setImpression(event.target.value)}
+              className="field-input min-h-36 resize-y"
+              placeholder="例：お客様に「ありがとう」と言っていただけました"
+              required
+            />
+          </FormSection>
 
-        <label className="block">
-          <span className="mb-1 block text-sm font-medium text-slate-700">写真</span>
-          <input
-            type="file"
-            accept="image/*"
-            capture="environment"
-            disabled={photoLoading || loading}
-            onChange={(event) =>
-              void handlePhotoChange(event.target.files?.[0] || null)
-            }
-            className="block w-full rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-700 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-600 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-emerald-700"
-          />
-          <p className="mt-2 text-xs text-slate-500">
-            任意・スマホの写真も自動で軽くなります
-          </p>
-          {photoLoading && (
-            <p className="mt-2 text-xs text-emerald-700">写真を準備中...</p>
-          )}
-          {previewUrl && (
-            <div className="mt-4 overflow-hidden rounded-xl border border-slate-200">
-              <Image
-                src={previewUrl}
-                alt="選択した写真のプレビュー"
-                width={800}
-                height={600}
-                unoptimized
-                className="h-auto max-h-80 w-full object-cover"
+          <FormSection step="02" label="写真" hint="任意・スマホの写真も自動で軽くなります">
+            <label className="block cursor-pointer rounded-xl border border-dashed border-[var(--border)] bg-[var(--accent-soft)]/30 px-4 py-5 text-center transition hover:bg-[var(--accent-soft)]/50">
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                disabled={photoLoading || loading}
+                onChange={(event) =>
+                  void handlePhotoChange(event.target.files?.[0] || null)
+                }
+                className="sr-only"
               />
-            </div>
-          )}
-        </label>
+              <span className="text-[0.875rem] font-medium text-[var(--accent)]">
+                写真を選ぶ
+              </span>
+              <span className="mt-1 block text-[0.8125rem] text-[var(--muted)]">
+                タップして撮影または選択
+              </span>
+            </label>
 
-        <label className="block">
-          <span className="mb-1 block text-sm font-medium text-slate-700">文面</span>
-          <textarea
-            value={message}
-            onChange={(event) => setMessage(event.target.value)}
-            className="min-h-32 w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-            placeholder="共有用の文面を書いてください"
-            required
-          />
-        </label>
+            {photoLoading && (
+              <p className="mt-3 text-center text-[0.8125rem] text-[var(--accent-muted)]">
+                写真を準備中...
+              </p>
+            )}
 
-        {error && (
-          <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>
-        )}
+            {previewUrl && (
+              <div className="mt-4 overflow-hidden rounded-xl border border-[var(--border)]">
+                <Image
+                  src={previewUrl}
+                  alt="選択した写真のプレビュー"
+                  width={800}
+                  height={600}
+                  unoptimized
+                  className="h-auto max-h-72 w-full object-cover"
+                />
+              </div>
+            )}
+          </FormSection>
 
-        {success && (
-          <p className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            送信しました。
-          </p>
-        )}
+          <FormSection step="03" label="文面" hint="共有用のメッセージを書いてください">
+            <textarea
+              value={message}
+              onChange={(event) => setMessage(event.target.value)}
+              className="field-input min-h-36 resize-y"
+              placeholder="例：チームの励みになる一言を"
+              required
+            />
+          </FormSection>
+        </div>
+
+        {error && <p className="alert-error mt-6">{error}</p>}
+        {success && <p className="alert-success mt-6">送信しました。</p>}
 
         <button
           type="submit"
           disabled={loading || photoLoading}
-          className="w-full rounded-xl bg-emerald-600 px-4 py-3 font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="btn-primary mt-8"
         >
           {loading ? "送信中..." : "送信する"}
         </button>

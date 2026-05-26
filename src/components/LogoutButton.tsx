@@ -24,12 +24,9 @@ export function LogoutButton({ className = "" }: { className?: string }) {
       type="button"
       onClick={() => void handleLogout()}
       disabled={loading}
-      className={
-        className ||
-        "rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
-      }
+      className={className || "btn-ghost"}
     >
-      {loading ? "ログアウト中..." : "ログアウト"}
+      {loading ? "..." : "ログアウト"}
     </button>
   );
 }
