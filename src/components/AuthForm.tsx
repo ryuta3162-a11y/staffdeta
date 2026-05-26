@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
+import { STORES } from "@/lib/stores";
 
 interface AuthFormProps {
   mode: "login" | "register";
@@ -48,23 +49,28 @@ export function AuthForm({ mode }: AuthFormProps) {
         title="ナイスプレーシェア"
         description={
           mode === "login"
-            ? "ログインして、今日のナイスプレーを共有しましょう。"
-            : "はじめての方は、店舗名と名前で登録してください。"
+            ? "店舗を選んでログインしてください。"
+            : "店舗を選んで、初回登録を行ってください。"
         }
       />
 
       <form onSubmit={handleSubmit} className="card p-6 sm:p-8">
         <div className="space-y-5">
           <label className="block">
-            <span className="field-label">店舗名</span>
-            <input
-              type="text"
+            <span className="field-label">店舗</span>
+            <select
               value={storeName}
               onChange={(event) => setStoreName(event.target.value)}
               className="field-input"
-              placeholder="例：渋谷店"
               required
-            />
+            >
+              <option value="">店舗を選択してください</option>
+              {STORES.map((store) => (
+                <option key={store} value={store}>
+                  {store}
+                </option>
+              ))}
+            </select>
           </label>
 
           <label className="block">

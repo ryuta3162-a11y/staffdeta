@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getSession } from "@/lib/auth";
+import {
+  registerPasswordField,
+  staffNameField,
+  storeNameField,
+} from "@/lib/authSchema";
 import { callGas } from "@/lib/gas";
 
 const registerSchema = z.object({
-  storeName: z.string().min(1, "店舗名を入力してください"),
-  staffName: z.string().min(1, "名前を入力してください"),
-  password: z.string().min(6, "パスワードは6文字以上で入力してください"),
+  storeName: storeNameField,
+  staffName: staffNameField,
+  password: registerPasswordField,
 });
 
 export async function POST(request: Request) {

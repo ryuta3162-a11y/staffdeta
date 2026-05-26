@@ -8,6 +8,24 @@ const CONFIG = {
   STAFF_SHEET: "スタッフ",
 };
 
+const STORES = [
+  "洗足",
+  "目黒",
+  "上馬",
+  "桜新町",
+  "青葉台",
+  "FIT365京王堀之内",
+  "京王稲田堤",
+  "読売ランド前",
+  "向ヶ丘遊園",
+  "FIT365稲城",
+  "分倍河原",
+  "立川",
+  "高幡不動",
+  "武蔵小金井",
+  "FIT365立川柏町",
+];
+
 function doGet() {
   return ContentService.createTextOutput("Nice Place Share API is running.");
 }
@@ -38,6 +56,16 @@ function verifySecret_(secret) {
   const expected = PropertiesService.getScriptProperties().getProperty("API_SECRET");
   if (!expected || secret !== expected) {
     throw new Error("認証に失敗しました");
+  }
+}
+
+function isValidStore_(storeName) {
+  return STORES.indexOf(storeName) !== -1;
+}
+
+function validateStore_(storeName) {
+  if (!isValidStore_(storeName)) {
+    throw new Error("選択できない店舗です");
   }
 }
 
@@ -89,6 +117,7 @@ function registerStaff_(data) {
   if (!storeName || !staffName) {
     throw new Error("店舗名と名前を入力してください");
   }
+  validateStore_(storeName);
   if (password.length < 6) {
     throw new Error("パスワードは6文字以上で入力してください");
   }
@@ -117,6 +146,8 @@ function loginStaff_(data) {
   const staffName = String(data.staffName || "").trim();
   const password = String(data.password || "");
 
+  validateStore_(storeName);
+
   const row = findStaffRow_(storeName, staffName);
   if (!row) {
     throw new Error("店舗名・名前・パスワードが正しくありません");
@@ -142,6 +173,7 @@ function submitReport_(data) {
   if (!storeName || !staffName) {
     throw new Error("ログイン情報が不足しています");
   }
+  validateStore_(storeName);
   if (!report) {
     throw new Error("アピールポイントを入力してください");
   }
