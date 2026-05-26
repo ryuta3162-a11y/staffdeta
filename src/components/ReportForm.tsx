@@ -109,8 +109,8 @@ export function ReportForm({ storeName, staffName }: ReportFormProps) {
         description="取り組んだことと、出た成果を報告する場所です。"
         meta={
           <>
-            <span className="font-medium text-[var(--ink)]">{storeName}</span>
-            <span className="text-[var(--border)]">|</span>
+            <span className="font-bold text-[var(--ink)]">{storeName}</span>
+            <span className="font-bold text-[var(--accent)]">|</span>
             <span>{staffName}</span>
           </>
         }
@@ -147,10 +147,10 @@ export function ReportForm({ storeName, staffName }: ReportFormProps) {
                 }
                 className="sr-only"
               />
-              <span className="text-[0.875rem] font-medium text-[var(--ink)]">
+              <span className="text-[0.875rem] font-semibold text-[var(--accent)]">
                 写真を選ぶ
               </span>
-              <span className="mt-1 block text-[0.8125rem] text-[var(--muted)]">
+              <span className="mt-1 block text-[0.8125rem] font-medium text-[var(--muted)]">
                 なくても送信できます
               </span>
             </label>
