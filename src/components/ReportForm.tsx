@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { compressImage } from "@/lib/compressImage";
+import { LogoutButton } from "@/components/LogoutButton";
 
 interface ReportFormProps {
   storeName: string;
@@ -26,7 +26,6 @@ async function parseApiResponse(response: Response) {
 }
 
 export function ReportForm({ storeName, staffName }: ReportFormProps) {
-  const router = useRouter();
   const [impression, setImpression] = useState("");
   const [message, setMessage] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
@@ -62,12 +61,6 @@ export function ReportForm({ storeName, staffName }: ReportFormProps) {
     } finally {
       setPhotoLoading(false);
     }
-  }
-
-  async function handleLogout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/login");
-    router.refresh();
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -120,13 +113,7 @@ export function ReportForm({ storeName, staffName }: ReportFormProps) {
             {storeName} / {staffName}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-        >
-          ログアウト
-        </button>
+        <LogoutButton />
       </div>
 
       <form
@@ -193,7 +180,7 @@ export function ReportForm({ storeName, staffName }: ReportFormProps) {
 
         {success && (
           <p className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            送信しました。管理者のスプレッドシートに反映されます。
+            送信しました。
           </p>
         )}
 

@@ -5,7 +5,7 @@ import { getSession } from "@/lib/auth";
 export default async function LoginPage() {
   const session = await getSession();
   if (session.isLoggedIn) {
-    redirect("/report");
+    redirect("/home");
   }
 
   return <AuthForm mode="login" />;

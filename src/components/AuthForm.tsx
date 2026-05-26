@@ -33,8 +33,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         throw new Error(data.error || "エラーが発生しました");
       }
 
-      router.push("/report");
-      router.refresh();
+      window.location.href = "/home";
     } catch (submitError) {
       setError(
         submitError instanceof Error ? submitError.message : "エラーが発生しました",

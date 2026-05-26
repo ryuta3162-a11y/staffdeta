@@ -1,10 +1,5 @@
-import { ReportForm } from "@/components/ReportForm";
-import { requireSession } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
-export default async function ReportPage() {
-  const session = await requireSession();
-
-  return (
-    <ReportForm storeName={session.storeName} staffName={session.staffName} />
-  );
+export default function ReportPage() {
+  redirect("/home");
 }
