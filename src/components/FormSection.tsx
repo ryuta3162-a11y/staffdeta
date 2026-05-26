@@ -9,7 +9,7 @@ interface FormSectionProps {
 
 export function FormSection({ step, label, hint, children }: FormSectionProps) {
   return (
-    <section className="section-divider pt-6 first:border-t-0 first:pt-0">
+    <section className="section-divider">
       <div className="mb-4 flex items-start gap-3">
         <span className="step-marker">{step}</span>
         <div>
