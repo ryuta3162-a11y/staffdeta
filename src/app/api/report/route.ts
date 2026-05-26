@@ -10,12 +10,12 @@ export async function POST(request: Request) {
     }
 
     const formData = await request.formData();
-    const report = String(formData.get("report") || "").trim();
+    const impression = String(formData.get("impression") || "").trim();
     const photo = formData.get("photo");
 
-    if (!report) {
+    if (!impression) {
       return NextResponse.json(
-        { error: "アピールポイントを入力してください" },
+        { error: "所感を入力してください" },
         { status: 400 },
       );
     }
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
       action: "submit",
       storeName: session.storeName,
       staffName: session.staffName,
-      report,
+      impression,
     };
 
     if (photo instanceof File && photo.size > 0) {

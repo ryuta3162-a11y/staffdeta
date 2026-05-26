@@ -28,7 +28,7 @@ async function parseApiResponse(response: Response) {
 }
 
 export function ReportForm({ storeName, staffName }: ReportFormProps) {
-  const [report, setReport] = useState("");
+  const [impression, setImpression] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -72,7 +72,7 @@ export function ReportForm({ storeName, staffName }: ReportFormProps) {
 
     try {
       const formData = new FormData();
-      formData.append("report", report);
+      formData.append("impression", impression);
 
       if (photo) {
         const compressed = await compressImage(photo);
@@ -89,7 +89,7 @@ export function ReportForm({ storeName, staffName }: ReportFormProps) {
         throw new Error(data.error || "送信に失敗しました");
       }
 
-      setReport("");
+      setImpression("");
       clearPreview();
       setPhoto(null);
       setSuccess(true);
@@ -106,7 +106,7 @@ export function ReportForm({ storeName, staffName }: ReportFormProps) {
     <div className="w-full">
       <PageHeader
         title="ナイスプレーシェア"
-        description="取り組んだことと、出た成果を報告する場所です。"
+        description="お客様や店舗のために貢献できたことを共有しましょう。"
         meta={
           <>
             <span className="font-bold text-[var(--ink)]">{storeName}</span>
@@ -121,21 +121,23 @@ export function ReportForm({ storeName, staffName }: ReportFormProps) {
         <div className="space-y-6">
           <FormSection
             step="①"
-            label="アピールポイント"
-            hint="どんな取り組みをして、どんな成果が出たかを書いてください"
+            label="所感"
+            hint="お客様や店舗のために貢献できたと思うことをお書きください"
           >
             <textarea
-              value={report}
-              onChange={(event) => setReport(event.target.value)}
+              value={impression}
+              onChange={(event) => setImpression(event.target.value)}
               className="field-input min-h-44 resize-y leading-relaxed"
-              placeholder={
-                "例：接客の声かけを増やした結果、お客様から「気持ちよく過ごせた」とお声をいただけました"
-              }
+              placeholder="例：売場の整理整頓を徹底し、お客様が商品を選びやすくなりました"
               required
             />
           </FormSection>
 
-          <FormSection step="②" label="写真" hint="任意">
+          <FormSection
+            step="②"
+            label="写真"
+            hint="BeforeAfterや成果物があれば添付してください"
+          >
             <label className="upload-zone block cursor-pointer px-4 py-5 text-center">
               <input
                 type="file"
@@ -151,7 +153,7 @@ export function ReportForm({ storeName, staffName }: ReportFormProps) {
                 写真を選ぶ
               </span>
               <span className="mt-1 block text-[0.8125rem] font-medium text-[var(--muted)]">
-                なくても送信できます
+                任意・なくても送信できます
               </span>
             </label>
 

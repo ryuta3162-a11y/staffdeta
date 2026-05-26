@@ -96,7 +96,7 @@ function setupSheets_() {
   if (reportSheet.getLastRow() === 0) {
     reportSheet
       .getRange(1, 1, 1, 6)
-      .setValues([["店舗名", "名前", "", "写真", "アピールポイント", "送信日時"]]);
+      .setValues([["店舗名", "名前", "所感", "写真", "", "送信日時"]]);
   }
 
   const staffSheet = getStaffSheet_();
@@ -168,14 +168,16 @@ function loginStaff_(data) {
 function submitReport_(data) {
   const storeName = String(data.storeName || "").trim();
   const staffName = String(data.staffName || "").trim();
-  const report = String(data.report || data.message || "").trim();
+  const impression = String(
+    data.impression || data.report || data.message || "",
+  ).trim();
 
   if (!storeName || !staffName) {
     throw new Error("ログイン情報が不足しています");
   }
   validateStore_(storeName);
-  if (!report) {
-    throw new Error("アピールポイントを入力してください");
+  if (!impression) {
+    throw new Error("所感を入力してください");
   }
 
   let photoUrl = "";
@@ -192,9 +194,9 @@ function submitReport_(data) {
   getReportSheet_().appendRow([
     storeName,
     staffName,
-    "",
+    impression,
     photoUrl,
-    report,
+    "",
     formatNow_(),
   ]);
 
