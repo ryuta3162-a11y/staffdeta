@@ -19,7 +19,7 @@ export function PageHeader({
     <header className="mb-10">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.22em] text-[var(--accent-muted)]">
+          <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.24em] text-[var(--accent)]">
             {badge}
           </p>
           <h1 className="mt-3 text-[1.75rem] font-bold leading-tight tracking-tight text-[var(--ink)] sm:text-[2rem]">
@@ -31,7 +31,7 @@ export function PageHeader({
             </p>
           )}
           {meta && (
-            <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-white/70 px-3.5 py-1.5 text-[0.8125rem] text-[var(--muted)]">
+            <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[#fafafa] px-3.5 py-1.5 text-[0.8125rem] text-[var(--muted)]">
               {meta}
             </div>
           )}

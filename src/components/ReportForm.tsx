@@ -136,7 +136,7 @@ export function ReportForm({ storeName, staffName }: ReportFormProps) {
           </FormSection>
 
           <FormSection step="②" label="写真" hint="任意">
-            <label className="block cursor-pointer rounded-xl border border-dashed border-[var(--border)] bg-[var(--accent-soft)]/30 px-4 py-5 text-center transition hover:bg-[var(--accent-soft)]/50">
+            <label className="upload-zone block cursor-pointer px-4 py-5 text-center">
               <input
                 type="file"
                 accept="image/*"
@@ -147,7 +147,7 @@ export function ReportForm({ storeName, staffName }: ReportFormProps) {
                 }
                 className="sr-only"
               />
-              <span className="text-[0.875rem] font-medium text-[var(--accent)]">
+              <span className="text-[0.875rem] font-medium text-[var(--ink)]">
                 写真を選ぶ
               </span>
               <span className="mt-1 block text-[0.8125rem] text-[var(--muted)]">
@@ -156,7 +156,7 @@ export function ReportForm({ storeName, staffName }: ReportFormProps) {
             </label>
 
             {photoLoading && (
-              <p className="mt-3 text-center text-[0.8125rem] text-[var(--accent-muted)]">
+              <p className="mt-3 text-center text-[0.8125rem] text-[var(--muted)]">
                 写真を準備中...
               </p>
             )}
