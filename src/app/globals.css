@@ -152,6 +152,44 @@ select.field-input {
   color: var(--accent-hover);
 }
 
+.upload-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.upload-btn {
+  display: flex;
+  cursor: pointer;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #aaaaaa;
+  border-radius: 0.5rem;
+  background: #fafafa;
+  padding: 1rem 0.75rem;
+  text-align: center;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.upload-btn:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.upload-btn-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.upload-btn-desc {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
 .upload-zone {
   border: 1.5px dashed #aaaaaa;
   border-radius: 0.5rem;

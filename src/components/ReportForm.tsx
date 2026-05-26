@@ -36,6 +36,10 @@ export function ReportForm({ storeName, staffName }: ReportFormProps) {
   const [loading, setLoading] = useState(false);
   const [photoLoading, setPhotoLoading] = useState(false);
 
+  function handlePhotoInputChange(file: File | null) {
+    void handlePhotoChange(file);
+  }
+
   function clearPreview() {
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
@@ -138,24 +142,42 @@ export function ReportForm({ storeName, staffName }: ReportFormProps) {
             label="写真"
             hint="BeforeAfterや成果物があれば添付してください"
           >
-            <label className="upload-zone block cursor-pointer px-4 py-5 text-center">
-              <input
-                type="file"
-                accept="image/*"
-                capture="environment"
-                disabled={photoLoading || loading}
-                onChange={(event) =>
-                  void handlePhotoChange(event.target.files?.[0] || null)
-                }
-                className="sr-only"
-              />
-              <span className="text-[0.875rem] font-semibold text-[var(--accent)]">
-                写真を選ぶ
-              </span>
-              <span className="mt-1 block text-[0.8125rem] font-medium text-[var(--muted)]">
-                任意・なくても送信できます
-              </span>
-            </label>
+            <div className="upload-actions">
+              <label className="upload-btn">
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  disabled={photoLoading || loading}
+                  onChange={(event) => {
+                    handlePhotoInputChange(event.target.files?.[0] || null);
+                    event.target.value = "";
+                  }}
+                  className="sr-only"
+                />
+                <span className="upload-btn-title">カメラで撮影</span>
+                <span className="upload-btn-desc">カメラを起動</span>
+              </label>
+
+              <label className="upload-btn">
+                <input
+                  type="file"
+                  accept="image/*"
+                  disabled={photoLoading || loading}
+                  onChange={(event) => {
+                    handlePhotoInputChange(event.target.files?.[0] || null);
+                    event.target.value = "";
+                  }}
+                  className="sr-only"
+                />
+                <span className="upload-btn-title">画像を添付</span>
+                <span className="upload-btn-desc">フォトから選択</span>
+              </label>
+            </div>
+
+            <p className="mt-3 text-center text-[0.8125rem] font-medium text-[var(--muted)]">
+              任意・なくても送信できます
+            </p>
 
             {photoLoading && (
               <p className="mt-3 text-center text-[0.8125rem] text-[var(--muted)]">
