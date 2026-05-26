@@ -9,22 +9,25 @@ interface PageHeaderProps {
 }
 
 export function PageHeader({
-  badge = "Nice Place Share",
+  badge = "Nice Play Share",
   title,
   description,
   meta,
   action,
 }: PageHeaderProps) {
   return (
-    <header className="mb-10">
+    <header className="page-header">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="badge-accent">{badge}</p>
-          <h1 className="page-title mt-3 sm:text-[2rem]">{title}</h1>
+          <div className="header-brand">
+            <span className="header-brand-line" aria-hidden="true" />
+            <p className="header-brand-text">{badge}</p>
+          </div>
+          <h1 className="page-title">{title}</h1>
           {description && <p className="page-desc">{description}</p>}
-          {meta && <div className="meta-badge mt-4">{meta}</div>}
+          {meta && <div className="meta-badge mt-5">{meta}</div>}
         </div>
-        {action && <div className="shrink-0">{action}</div>}
+        {action && <div className="shrink-0 pt-1">{action}</div>}
       </div>
     </header>
   );

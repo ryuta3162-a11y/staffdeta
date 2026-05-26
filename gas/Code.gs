@@ -27,7 +27,7 @@ const STORES = [
 ];
 
 function doGet() {
-  return ContentService.createTextOutput("Nice Place Share API is running.");
+  return ContentService.createTextOutput("Nice Play Share API is running.");
 }
 
 function doPost(e) {
