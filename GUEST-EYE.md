@@ -1,6 +1,13 @@
 # ゲストアイ セットアップ手順
 
-週1回ジムを利用する方向け。**ナイスプレーシェアとは完全に別**です。
+**ナイスプレーシェアとは別の Vercel プロジェクト** で公開します。
+
+| アプリ | URL（例） |
+|--------|-----------|
+| ナイスプレーシェア | https://nps-share.vercel.app |
+| **ゲストアイ** | **https://guest-eye.vercel.app** |
+
+同じ GitHub リポジトリ（`staffdeta`）を、Vercel に **2回 Import** します。
 
 ---
 
@@ -9,90 +16,71 @@
 | 用途 | URL |
 |------|-----|
 | **スプレッドシート** | https://docs.google.com/spreadsheets/d/1-OWf--m_pNq6KejbIsACHB5JcnukP5YTO_CXWtZzjtg/edit |
-| **写真フォルダ（Drive）** | https://drive.google.com/drive/folders/1GKZ-45YtykbXUkazUya--hMBoSs45wmC |
+| **写真フォルダ** | https://drive.google.com/drive/folders/1GKZ-45YtykbXUkazUya--hMBoSs45wmC |
+| **GAS** | https://script.google.com/macros/s/AKfycbyQ64fqP0qcf_lO41084Zhz9SqaMiZlnemEbIN5OsBJOo1iL8C7l-wYEzeIX6UdtF5U/exec |
 
 ---
 
-## チェックリスト
+## ☐ 1. GAS（済ならスキップ）
 
-### ☐ 1. スプレッドシートのタブ
+1. [スプレッドシート](https://docs.google.com/spreadsheets/d/1-OWf--m_pNq6KejbIsACHB5JcnukP5YTO_CXWtZzjtg/edit) → **拡張機能 → Apps Script**
+2. `gas-guest-eye/Code.gs` を貼り付け
+3. **スクリプト プロパティ**：
 
-[スプレッドシート](https://docs.google.com/spreadsheets/d/1-OWf--m_pNq6KejbIsACHB5JcnukP5YTO_CXWtZzjtg/edit) を開き：
-
-1. 1枚目のタブ名 → **`所感`**
-2. 2枚目のタブを追加 → 名前 **`スタッフ`**
-
----
-
-### ☐ 2. GAS を設定
-
-1. スプレッドシートから **拡張機能 → Apps Script**
-2. `gas-guest-eye/Code.gs` の内容を **すべて貼り付け**
-3. **⚙ プロジェクトの設定 → スクリプト プロパティ** に追加：
-
-| プロパティ | 値（コピペ） |
-|-----------|-------------|
+| プロパティ | 値 |
+|-----------|-----|
 | `API_SECRET` | `guest-eye-secret-2024` |
 | `DRIVE_FOLDER_ID` | `1GKZ-45YtykbXUkazUya--hMBoSs45wmC` |
 
-4. **デプロイ → 新しいデプロイ → ウェブアプリ**
-   - 実行ユーザー：**自分**
-   - アクセス：**全員**
-5. 表示された URL（`/exec` で終わる）をコピー
+4. タブ名：**所感** / **スタッフ**
 
 ---
 
-### ☐ 3. Vercel 環境変数
+## ☐ 2. Vercel に **新しいプロジェクト** を作る
 
-[Vercel ダッシュボード](https://vercel.com/) → プロジェクト → **Settings → Environment Variables**
+1. [vercel.com](https://vercel.com) → **Add New → Project**
+2. 同じ **`staffdeta`** リポジトリを選ぶ → **Import**
+3. **Project Name** を **`guest-eye`** に変更  
+   → URL が `https://guest-eye.vercel.app` になる
 
-**追加する2つ：**
+### 環境変数（4つ）
 
 | Name | Value |
 |------|-------|
-| `GUEST_EYE_GAS_WEB_APP_URL` | 手順2でコピーした GAS の URL |
+| `APP_MODE` | `guest-eye` |
+| `SESSION_SECRET` | `nps-session-abcdef1234567890abcdef12`（NPSと同じでOK） |
+| `GUEST_EYE_GAS_WEB_APP_URL` | `https://script.google.com/macros/s/AKfycbyQ64fqP0qcf_lO41084Zhz9SqaMiZlnemEbIN5OsBJOo1iL8C7l-wYEzeIX6UdtF5U/exec` |
 | `GUEST_EYE_GAS_API_SECRET` | `guest-eye-secret-2024` |
 
-※ 既にある `SESSION_SECRET` / `GAS_WEB_APP_URL` / `GAS_API_SECRET` は **ナイスプレーシェア用なので触らない**
+※ **NPS 用**（`GAS_WEB_APP_URL` など）は **入れなくてOK**
 
-追加後 → **Deployments → Redeploy**（再デプロイ）
+4. **Deploy**
 
 ---
 
-### ☐ 4. 動作確認
+## ☐ 3. 動作確認
 
-1. `https://あなたのドメイン/guest-eye` を開く
-2. 店舗を選んで新規登録
-3. 所感を送信
-4. [スプレッドシート「所感」タブ](https://docs.google.com/spreadsheets/d/1-OWf--m_pNq6KejbIsACHB5JcnukP5YTO_CXWtZzjtg/edit) に1行増えていれば成功
-5. 写真は [ゲストアイ画像フォルダ](https://drive.google.com/drive/folders/1GKZ-45YtykbXUkazUya--hMBoSs45wmC) に保存される
+1. https://guest-eye.vercel.app を開く  
+   → ゲストアイのログイン画面が出れば成功
+2. 店舗名・名前で登録 → 所感を送信
+3. [スプレッドシート](https://docs.google.com/spreadsheets/d/1-OWf--m_pNq6KejbIsACHB5JcnukP5YTO_CXWtZzjtg/edit) に反映
 
 ---
 
 ## スタッフに渡す URL
 
 ```
-https://あなたのドメイン/guest-eye
+https://guest-eye.vercel.app
 ```
 
-※ ナイスプレーシェア（`/`）とは別 URL です。
+ナイスプレーシェア（https://nps-share.vercel.app）とは **別URL** です。
 
 ---
 
-## ファイル構成（開発者向け）
+## ファイル構成
 
 ```
 gas-guest-eye/Code.gs     ゲストアイ用 GAS
-src/app/guest-eye/        ゲストアイ画面・API
-gas/Code.gs               ナイスプレーシェア用（別）
+gas/Code.gs               ナイスプレーシェア用 GAS（別）
+src/middleware.ts         APP_MODE=guest-eye 時にゲストアイへ誘導
 ```
-
----
-
-## うまくいかないとき
-
-| 症状 | 確認 |
-|------|------|
-| ログイン・送信エラー | Vercel の `GUEST_EYE_GAS_API_SECRET` = `guest-eye-secret-2024` か |
-| 写真が保存されない | GAS の `DRIVE_FOLDER_ID` = `1GKZ-45YtykbXUkazUya--hMBoSs45wmC` か |
-| データが別シートに入る | GAS を **このスプレッドシート** に紐づけているか |

@@ -4,11 +4,11 @@
 
 | アプリ | URL | GAS |
 |--------|-----|-----|
-| **ナイスプレーシェア** | `/` | `gas/` |
-| **ゲストアイ**（週1回ジム利用者向け） | `/guest-eye` | `gas-guest-eye/` |
+| **ナイスプレーシェア** | `nps-share.vercel.app` 等 | `gas/` | （未設定 or `nps`） |
+| **ゲストアイ** | **`guest-eye.vercel.app`** | `gas-guest-eye/` | **`guest-eye`** |
 
-- ナイスプレーシェアの手順 → この README
-- ゲストアイの手順 → [`GUEST-EYE.md`](GUEST-EYE.md)
+- ナイスプレーシェア → [`README.md`](README.md) / [`VERCEL.md`](VERCEL.md)
+- ゲストアイ → [`GUEST-EYE.md`](GUEST-EYE.md)（**別 Vercel プロジェクト**）
 
 ---
 
