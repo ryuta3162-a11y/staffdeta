@@ -1,6 +1,6 @@
 /**
- * ナイスプレーシェア - Google Apps Script バックエンド
- * （ゲストアイ用は gas-guest-eye/Code.gs を使用）
+ * ゲストアイ - Google Apps Script バックエンド
+ * 週1回ジム利用者向け・スプレッドシート・Drive への読み書きを担当
  */
 
 const CONFIG = {
@@ -27,7 +27,7 @@ const STORES = [
 ];
 
 function doGet() {
-  return ContentService.createTextOutput("Nice Play Share API is running.");
+  return ContentService.createTextOutput("Guest Eye API is running.");
 }
 
 function doPost(e) {

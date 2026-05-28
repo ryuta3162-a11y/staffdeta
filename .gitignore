@@ -38,5 +38,6 @@ next-env.d.ts
 
 # clasp
 .clasp.json
+.clasp.guest-eye.json
 
 # typescript
