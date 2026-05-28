@@ -1,10 +1,6 @@
 import { z } from "zod";
-import { isValidStore } from "./stores";
 
-export const storeNameField = z
-  .string()
-  .min(1, "店舗を選択してください")
-  .refine(isValidStore, "選択できない店舗です");
+export const storeNameField = z.string().min(1, "店舗名を入力してください");
 
 export const staffNameField = z.string().min(1, "名前を入力してください");
 

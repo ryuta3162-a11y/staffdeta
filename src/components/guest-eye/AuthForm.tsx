@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
-import { STORES } from "@/lib/guest-eye/stores";
 
 interface AuthFormProps {
   mode: "login" | "register";
@@ -50,28 +49,23 @@ export function GuestEyeAuthForm({ mode }: AuthFormProps) {
         title="ゲストアイ"
         description={
           mode === "login"
-            ? "週1回ジムを利用する方は、店舗を選んでログインしてください。"
-            : "週1回ジムを利用する方は、店舗を選んで初回登録を行ってください。"
+            ? "週1回ジムを利用する方は、店舗名を入力してログインしてください。"
+            : "週1回ジムを利用する方は、店舗名を入力して初回登録を行ってください。"
         }
       />
 
       <form onSubmit={handleSubmit} className="card p-6 sm:p-8">
         <div className="space-y-5">
           <label className="block">
-            <span className="field-label">店舗</span>
-            <select
+            <span className="field-label">店舗名</span>
+            <input
+              type="text"
               value={storeName}
               onChange={(event) => setStoreName(event.target.value)}
               className="field-input"
+              placeholder="例：経堂・京王堀之内など"
               required
-            >
-              <option value="">店舗を選択してください</option>
-              {STORES.map((store) => (
-                <option key={store} value={store}>
-                  {store}
-                </option>
-              ))}
-            </select>
+            />
           </label>
 
           <label className="block">
