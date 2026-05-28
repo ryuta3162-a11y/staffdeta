@@ -2,6 +2,7 @@ import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { sessionOptions, type SessionData } from "./session";
+import { guestEyePaths } from "./paths";
 
 export async function getSession() {
   return getIronSession<SessionData>(await cookies(), sessionOptions);
@@ -10,7 +11,7 @@ export async function getSession() {
 export async function requireSession() {
   const session = await getSession();
   if (!session.isLoggedIn) {
-    redirect("/guest-eye/login");
+    redirect(guestEyePaths.login);
   }
   return session;
 }

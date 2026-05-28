@@ -43,11 +43,12 @@
 3. **Project Name** を **`guest-eye`** に変更  
    → URL が `https://guest-eye.vercel.app` になる
 
-### 環境変数（4つ）
+### 環境変数（5つ）
 
 | Name | Value |
 |------|-------|
 | `APP_MODE` | `guest-eye` |
+| `NEXT_PUBLIC_APP_MODE` | `guest-eye` |
 | `SESSION_SECRET` | `nps-session-abcdef1234567890abcdef12`（NPSと同じでOK） |
 | `GUEST_EYE_GAS_WEB_APP_URL` | `https://script.google.com/macros/s/AKfycbyQ64fqP0qcf_lO41084Zhz9SqaMiZlnemEbIN5OsBJOo1iL8C7l-wYEzeIX6UdtF5U/exec` |
 | `GUEST_EYE_GAS_API_SECRET` | `guest-eye-secret-2024` |
@@ -61,7 +62,7 @@
 ## ☐ 3. 動作確認
 
 1. https://guest-eye.vercel.app を開く  
-   → ゲストアイのログイン画面が出れば成功
+   → ゲストアイのログイン画面（URL は `/login` のまま）
 2. 店舗名・名前で登録 → 所感を送信
 3. [スプレッドシート](https://docs.google.com/spreadsheets/d/1-OWf--m_pNq6KejbIsACHB5JcnukP5YTO_CXWtZzjtg/edit) に反映
 

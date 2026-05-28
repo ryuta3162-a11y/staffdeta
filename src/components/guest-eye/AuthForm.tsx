@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
+import { guestEyePaths } from "@/lib/guest-eye/paths";
 
 interface AuthFormProps {
   mode: "login" | "register";
@@ -21,7 +22,7 @@ export function GuestEyeAuthForm({ mode }: AuthFormProps) {
     setLoading(true);
 
     try {
-      const response = await fetch(`/guest-eye/api/auth/${mode}`, {
+      const response = await fetch(guestEyePaths.apiAuth(mode), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ storeName, staffName, password }),
@@ -32,7 +33,7 @@ export function GuestEyeAuthForm({ mode }: AuthFormProps) {
         throw new Error(data.error || "エラーが発生しました");
       }
 
-      window.location.href = "/guest-eye/home";
+      window.location.href = guestEyePaths.home;
     } catch (submitError) {
       setError(
         submitError instanceof Error ? submitError.message : "エラーが発生しました",
@@ -105,14 +106,14 @@ export function GuestEyeAuthForm({ mode }: AuthFormProps) {
         {mode === "login" ? (
           <>
             初めての方は{" "}
-            <Link href="/guest-eye/register" className="link-accent">
+            <Link href={guestEyePaths.register} className="link-accent">
               新規登録
             </Link>
           </>
         ) : (
           <>
             登録済みの方は{" "}
-            <Link href="/guest-eye/login" className="link-accent">
+            <Link href={guestEyePaths.login} className="link-accent">
               ログイン
             </Link>
           </>

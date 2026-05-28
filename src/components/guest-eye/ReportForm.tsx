@@ -6,6 +6,7 @@ import { FormSection } from "@/components/FormSection";
 import { PageHeader } from "@/components/PageHeader";
 import { GuestEyeLogoutButton } from "@/components/guest-eye/LogoutButton";
 import { compressImage } from "@/lib/compressImage";
+import { guestEyePaths } from "@/lib/guest-eye/paths";
 
 interface ReportFormProps {
   storeName: string;
@@ -118,7 +119,7 @@ export function GuestEyeReportForm({ storeName, staffName }: ReportFormProps) {
         formData.append("photos", compressed);
       }
 
-      const response = await fetch("/guest-eye/api/report", {
+      const response = await fetch(guestEyePaths.apiReport, {
         method: "POST",
         body: formData,
       });

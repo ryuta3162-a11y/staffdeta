@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { guestEyePaths } from "@/lib/guest-eye/paths";
 
 export function GuestEyeLogoutButton({ className = "" }: { className?: string }) {
   const router = useRouter();
@@ -10,11 +11,11 @@ export function GuestEyeLogoutButton({ className = "" }: { className?: string })
   async function handleLogout() {
     setLoading(true);
     try {
-      await fetch("/guest-eye/api/auth/logout", { method: "POST" });
-      window.location.href = "/guest-eye/login";
+      await fetch(guestEyePaths.apiLogout, { method: "POST" });
+      window.location.href = guestEyePaths.login;
     } catch {
       setLoading(false);
-      router.push("/guest-eye/login");
+      router.push(guestEyePaths.login);
       router.refresh();
     }
   }
