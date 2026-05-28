@@ -146,7 +146,7 @@ export function GuestEyeReportForm({ storeName, staffName }: ReportFormProps) {
       <PageHeader
         badge="Guest Eye"
         title="ゲストアイ"
-        description="週1回ジムご利用時の所感を共有しましょう。"
+        description="週1回ジムご利用時の気づきを共有しましょう。"
         meta={
           <>
             <span className="font-bold text-[var(--ink)]">{storeName}</span>
@@ -162,21 +162,21 @@ export function GuestEyeReportForm({ storeName, staffName }: ReportFormProps) {
           <FormSection
             step="①"
             label="所感"
-            hint="お客様や店舗のために貢献できたと思うことをお書きください"
+            hint="トレーニング内容やお客様目線の気づきなど入力下さい"
           >
             <textarea
               value={impression}
               onChange={(event) => setImpression(event.target.value)}
               className="field-input min-h-44 resize-y leading-relaxed"
-              placeholder="例：週1回のトレーニングで、以前より動きやすくなったと感じました"
+              placeholder="例：レッグプレスの重量を上げられました。膝の使い方について気づきがありました"
               required
             />
           </FormSection>
 
           <FormSection
             step="②"
-            label="写真"
-            hint="BeforeAfterや成果物があれば添付してください（複数可）"
+            label="写真※任意"
+            hint="故障していたマシンやエラーがあれば画像を添付して下さい"
           >
             <div className="upload-actions">
               <label className="upload-btn">

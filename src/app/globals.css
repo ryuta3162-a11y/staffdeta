@@ -331,3 +331,12 @@ select.field-input {
   border-top: none;
   padding-top: 0;
 }
+
+.guest-eye-theme {
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-soft: #eff6ff;
+  --accent-muted: #2563eb;
+  --error-soft: #eff6ff;
+  --error: #1e40af;
+}

@@ -10,5 +10,5 @@ export default function GuestEyeLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return children;
+  return <div className="guest-eye-theme">{children}</div>;
 }
