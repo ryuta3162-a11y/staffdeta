@@ -92,21 +92,38 @@ function getStaffSheet_() {
 }
 
 function setupSheets_() {
-  const reportSheet = getReportSheet_();
-  if (reportSheet.getLastRow() === 0) {
-    reportSheet
-      .getRange(1, 1, 1, 6)
-      .setValues([["店舗名", "名前", "所感", "写真", "", "送信日時"]]);
-  }
-
-  const staffSheet = getStaffSheet_();
-  if (staffSheet.getLastRow() === 0) {
-    staffSheet
-      .getRange(1, 1, 1, 4)
-      .setValues([["店舗名", "名前", "パスワード", "登録日時"]]);
-  }
-
+  ensureReportHeaders_();
+  ensureStaffHeaders_();
   return { success: true };
+}
+
+function ensureStaffHeaders_() {
+  ensureSheetHeaders_(getStaffSheet_(), ["店舗名", "名前", "パスワード", "登録日時"]);
+}
+
+function ensureReportHeaders_() {
+  ensureSheetHeaders_(getReportSheet_(), [
+    "店舗名",
+    "名前",
+    "所感",
+    "写真",
+    "",
+    "送信日時",
+  ]);
+}
+
+function ensureSheetHeaders_(sheet, headers) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow === 0) {
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    return;
+  }
+
+  const firstCell = String(sheet.getRange(1, 1).getValue() || "").trim();
+  if (firstCell !== headers[0]) {
+    sheet.insertRowBefore(1);
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  }
 }
 
 function registerStaff_(data) {
@@ -126,6 +143,7 @@ function registerStaff_(data) {
     throw new Error("この店舗名・名前の組み合わせは既に登録されています");
   }
 
+  ensureStaffHeaders_();
   const staffSheet = getStaffSheet_();
   staffSheet.appendRow([
     storeName,
@@ -179,6 +197,8 @@ function submitReport_(data) {
   if (!impression) {
     throw new Error("所感を入力してください");
   }
+
+  ensureReportHeaders_();
 
   let photoUrl = "";
   if (data.photos && data.photos.length) {
