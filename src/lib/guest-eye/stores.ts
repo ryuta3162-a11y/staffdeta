@@ -13,6 +13,9 @@ export function storeNameFromKey(key: string): string {
   return parts.slice(2).join("::");
 }
 
+export function territoryKey(area: string, territory: string): string {
+  return `${area}::${territory}`;
+}
 
 export function parseTerritoryKey(key: string): { area: string; territory: string } {
   const [area, territory] = key.split("::");
