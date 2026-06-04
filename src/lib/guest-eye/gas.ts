@@ -3,7 +3,7 @@ interface GasResponse {
   error?: string;
   storeName?: string;
   staffName?: string;
-  stores?: Array<{ area: string; territory: string; storeName: string } | string>;
+  stores?: Array<{ area: string; territory: string; storeName: string }> | string[];
   status?: string;
   message?: string;
   savedPassword?: string;
@@ -88,7 +88,8 @@ export async function registerGuestEyeStores(
 
   return {
     ...lastResult,
-    storeName: lastResult.storeName || uniqueStores[0],
+    storeName: uniqueStores[0],
     staffName: lastResult.staffName || staffName,
+    stores: uniqueStores,
   };
 }

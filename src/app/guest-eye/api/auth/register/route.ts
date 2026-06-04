@@ -25,8 +25,10 @@ export async function POST(request: Request) {
     const result = await registerGuestEyeStores(targets, staffName, password);
 
     const session = await getSession();
-    session.storeName =
-      result.storeName || targets[0]?.trim() || "";
+    const registeredStores =
+      (result.stores as string[] | undefined)?.filter(Boolean) || targets;
+    session.storeNames = registeredStores;
+    session.storeName = registeredStores[0] || "";
     session.staffName = result.staffName || staffName.trim();
     session.isLoggedIn = true;
     await session.save();

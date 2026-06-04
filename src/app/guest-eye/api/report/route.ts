@@ -12,6 +12,24 @@ export async function POST(request: Request) {
     }
 
     const formData = await request.formData();
+    const requestedStore = String(formData.get("storeName") || "").trim();
+    const allowedStores =
+      session.storeNames?.length > 0
+        ? session.storeNames
+        : session.storeName
+          ? [session.storeName]
+          : [];
+    const storeName = allowedStores.includes(requestedStore)
+      ? requestedStore
+      : session.storeName;
+
+    if (!storeName) {
+      return NextResponse.json(
+        { error: "店舗が選択されていません" },
+        { status: 400 },
+      );
+    }
+
     const impression = String(formData.get("impression") || "").trim();
     const healthRating = Number(formData.get("healthRating") || 0);
     const photoFiles = formData
@@ -41,7 +59,7 @@ export async function POST(request: Request) {
 
     const payload: Record<string, unknown> = {
       action: "submit",
-      storeName: session.storeName,
+      storeName,
       staffName: session.staffName,
       impression,
       healthRating,

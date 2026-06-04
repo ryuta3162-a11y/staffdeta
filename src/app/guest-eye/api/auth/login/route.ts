@@ -3,7 +3,6 @@ import { z } from "zod";
 import { getSession } from "@/lib/guest-eye/auth";
 import {
   passwordField,
-  registerPasswordField,
   staffNameField,
   storeNameField,
 } from "@/lib/guest-eye/authSchema";
@@ -35,7 +34,17 @@ export async function POST(request: Request) {
       password,
     });
 
+    const lookup = await callGuestEyeGas({
+      action: "lookupStaff",
+      staffName,
+    });
+    const registeredStores =
+      lookup.status === "existing" && Array.isArray(lookup.stores)
+        ? (lookup.stores as string[])
+        : [result.storeName || storeName.trim()];
+
     const session = await getSession();
+    session.storeNames = registeredStores;
     session.storeName = result.storeName || storeName.trim();
     session.staffName = result.staffName || staffName.trim();
     session.isLoggedIn = true;

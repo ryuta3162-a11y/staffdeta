@@ -10,6 +10,7 @@ import { guestEyePaths } from "@/lib/guest-eye/paths";
 
 interface ReportFormProps {
   storeName: string;
+  storeNames: string[];
   staffName: string;
 }
 
@@ -59,7 +60,12 @@ async function parseApiResponse(response: Response) {
   }
 }
 
-export function GuestEyeReportForm({ storeName, staffName }: ReportFormProps) {
+export function GuestEyeReportForm({
+  storeName,
+  storeNames,
+  staffName,
+}: ReportFormProps) {
+  const [activeStore, setActiveStore] = useState(storeName || storeNames[0] || "");
   const [impression, setImpression] = useState("");
   const [healthRating, setHealthRating] = useState(0);
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
@@ -142,6 +148,7 @@ export function GuestEyeReportForm({ storeName, staffName }: ReportFormProps) {
 
     try {
       const formData = new FormData();
+      formData.append("storeName", activeStore);
       formData.append("impression", impression);
       formData.append("healthRating", String(healthRating));
 
@@ -181,13 +188,34 @@ export function GuestEyeReportForm({ storeName, staffName }: ReportFormProps) {
         description="施設利用中の気づきを、お客様目線で共有してください。"
         meta={
           <>
-            <span className="font-bold text-[var(--ink)]">{storeName}</span>
+            <span className="font-bold text-[var(--ink)]">{activeStore}</span>
             <span className="font-bold text-[var(--accent)]">|</span>
             <span>{staffName}</span>
           </>
         }
         action={<GuestEyeLogoutButton />}
       />
+
+      {storeNames.length > 1 && (
+        <section className="guest-eye-panel mb-4">
+          <h3 className="store-filter-title">投稿する店舗</h3>
+          <p className="store-filter-hint mb-3">
+            登録済みの店舗を切り替えて、店舗ごとに所感を送信できます。
+          </p>
+          <div className="store-filter-chips">
+            {storeNames.map((name) => (
+              <button
+                key={name}
+                type="button"
+                className={`store-filter-chip ${activeStore === name ? "store-filter-chip--on" : ""}`}
+                onClick={() => setActiveStore(name)}
+              >
+                {name}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       <form onSubmit={handleSubmit} className="guest-eye-panel">
         <FormSection

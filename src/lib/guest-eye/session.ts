@@ -2,6 +2,7 @@ import type { SessionOptions } from "iron-session";
 
 export interface SessionData {
   storeName: string;
+  storeNames: string[];
   staffName: string;
   isLoggedIn: boolean;
 }
@@ -19,6 +20,7 @@ export const sessionOptions: SessionOptions = {
 
 export const defaultSession: SessionData = {
   storeName: "",
+  storeNames: [],
   staffName: "",
   isLoggedIn: false,
 };
