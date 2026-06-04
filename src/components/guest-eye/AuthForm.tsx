@@ -1,31 +1,163 @@
 "use client";
 
-import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
+import { StorePicker } from "@/components/guest-eye/StorePicker";
 import { guestEyePaths } from "@/lib/guest-eye/paths";
+import { loadSavedName, saveSavedName } from "@/lib/guest-eye/savedLogin";
+import type { StoreRecord } from "@/lib/guest-eye/stores";
 
-interface AuthFormProps {
-  mode: "login" | "register";
+type LookupStatus = "idle" | "new" | "needsSetup" | "existing";
+
+interface LookupResult {
+  status: LookupStatus;
+  message?: string;
+  stores?: string[];
 }
 
-export function GuestEyeAuthForm({ mode }: AuthFormProps) {
-  const [storeName, setStoreName] = useState("");
+export function GuestEyeAuthForm() {
   const [staffName, setStaffName] = useState("");
+  const [area, setArea] = useState("");
+  const [territory, setTerritory] = useState("");
+  const [storeName, setStoreName] = useState("");
   const [password, setPassword] = useState("");
+  const [stores, setStores] = useState<StoreRecord[]>([]);
+  const [lookup, setLookup] = useState<LookupResult>({ status: "idle" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [storesLoading, setStoresLoading] = useState(true);
+
+  const showStoreFields =
+    lookup.status === "new" ||
+    lookup.status === "needsSetup" ||
+    lookup.status === "existing";
+
+  useEffect(() => {
+    setStaffName(loadSavedName());
+  }, []);
+
+  useEffect(() => {
+    async function fetchStores() {
+      try {
+        const response = await fetch(guestEyePaths.apiStores);
+        const data = (await response.json()) as {
+          stores?: StoreRecord[];
+          error?: string;
+        };
+        if (!response.ok) {
+          throw new Error(data.error || "店舗データの取得に失敗しました");
+        }
+        setStores(data.stores || []);
+      } catch (fetchError) {
+        setError(
+          fetchError instanceof Error
+            ? fetchError.message
+            : "店舗データの取得に失敗しました",
+        );
+      } finally {
+        setStoresLoading(false);
+      }
+    }
+
+    void fetchStores();
+  }, []);
+
+  const runLookup = useCallback(async (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      setLookup({ status: "idle" });
+      return;
+    }
+
+    setLookupLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch(guestEyePaths.apiStaffLookup, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ staffName: trimmed }),
+      });
+      const data = (await response.json()) as LookupResult & { error?: string };
+      if (!response.ok) {
+        throw new Error(data.error || "確認に失敗しました");
+      }
+
+      setLookup({
+        status: data.status,
+        message: data.message,
+        stores: data.stores,
+      });
+    } catch (lookupError) {
+      setLookup({ status: "idle" });
+      setError(
+        lookupError instanceof Error ? lookupError.message : "確認に失敗しました",
+      );
+    } finally {
+      setLookupLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const trimmed = staffName.trim();
+    if (!trimmed) {
+      setLookup({ status: "idle" });
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      void runLookup(trimmed);
+    }, 400);
+
+    return () => window.clearTimeout(timer);
+  }, [staffName, runLookup]);
+
+  function handleAreaChange(nextArea: string) {
+    setArea(nextArea);
+    setTerritory("");
+    setStoreName("");
+  }
+
+  function handleTerritoryChange(nextTerritory: string) {
+    setTerritory(nextTerritory);
+    setStoreName("");
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError("");
     setLoading(true);
 
+    const trimmedName = staffName.trim();
+    if (!trimmedName) {
+      setError("名前を入力してください");
+      setLoading(false);
+      return;
+    }
+
+    if (!storeName) {
+      setError("所属店舗を選択してください");
+      setLoading(false);
+      return;
+    }
+
+    const isRegister =
+      lookup.status === "new" ||
+      lookup.status === "needsSetup" ||
+      (lookup.status === "existing" &&
+        !(lookup.stores || []).includes(storeName));
+    const authMode = isRegister ? "register" : "login";
+
     try {
-      const response = await fetch(guestEyePaths.apiAuth(mode), {
+      const response = await fetch(guestEyePaths.apiAuth(authMode), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ storeName, staffName, password }),
+        body: JSON.stringify({
+          storeName,
+          staffName: trimmedName,
+          password,
+        }),
       });
 
       const data = await response.json();
@@ -33,6 +165,7 @@ export function GuestEyeAuthForm({ mode }: AuthFormProps) {
         throw new Error(data.error || "エラーが発生しました");
       }
 
+      saveSavedName(trimmedName);
       window.location.href = guestEyePaths.home;
     } catch (submitError) {
       setError(
@@ -48,27 +181,11 @@ export function GuestEyeAuthForm({ mode }: AuthFormProps) {
       <PageHeader
         badge="Guest Eye"
         title="ゲストアイ"
-        description={
-          mode === "login"
-            ? "週1回ジムを利用する方は、店舗名を入力してログインしてください。"
-            : "週1回ジムを利用する方は、店舗名を入力して初回登録を行ってください。"
-        }
+        description="名前を入力してから、所属店舗とパスワードを選んでください。"
       />
 
       <form onSubmit={handleSubmit} className="card p-6 sm:p-8">
         <div className="space-y-5">
-          <label className="block">
-            <span className="field-label">店舗名</span>
-            <input
-              type="text"
-              value={storeName}
-              onChange={(event) => setStoreName(event.target.value)}
-              className="field-input"
-              placeholder="例：経堂・京王堀之内など"
-              required
-            />
-          </label>
-
           <label className="block">
             <span className="field-label">名前</span>
             <input
@@ -77,48 +194,82 @@ export function GuestEyeAuthForm({ mode }: AuthFormProps) {
               onChange={(event) => setStaffName(event.target.value)}
               className="field-input"
               placeholder="例：山田 太郎"
+              autoComplete="name"
               required
             />
           </label>
 
-          <label className="block">
-            <span className="field-label">パスワード</span>
-            <input
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className="field-input"
-              placeholder={mode === "register" ? "6文字以上" : "パスワード"}
-              minLength={mode === "register" ? 6 : 1}
-              required
-            />
-          </label>
+          {lookupLoading && (
+            <p className="text-[0.8125rem] text-[var(--muted)]">確認中...</p>
+          )}
+
+          {lookup.status === "needsSetup" && lookup.message && (
+            <p className="alert-info">{lookup.message}</p>
+          )}
+
+          {showStoreFields && !storesLoading && (
+            <>
+              <StorePicker
+                stores={stores}
+                area={area}
+                territory={territory}
+                storeName={storeName}
+                registeredStores={lookup.stores || []}
+                onAreaChange={handleAreaChange}
+                onTerritoryChange={handleTerritoryChange}
+                onStoreChange={setStoreName}
+                disabled={loading}
+              />
+
+              <label className="block">
+                <span className="field-label">パスワード</span>
+                <input
+                  type="text"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  className="field-input"
+                  placeholder={
+                    lookup.status === "new" || lookup.status === "needsSetup"
+                      ? "6文字以上で設定"
+                      : "パスワード"
+                  }
+                  autoComplete="off"
+                  minLength={
+                    lookup.status === "new" || lookup.status === "needsSetup"
+                      ? 6
+                      : 1
+                  }
+                  required
+                />
+              </label>
+            </>
+          )}
+
+          {storesLoading && staffName.trim() && (
+            <p className="text-[0.8125rem] text-[var(--muted)]">
+              店舗データを読み込み中...
+            </p>
+          )}
         </div>
 
-        {error && <p className="alert-error mt-5">{error}</p>}
-
-        <button type="submit" disabled={loading} className="btn-primary mt-7">
-          {loading ? "処理中..." : mode === "login" ? "ログイン" : "登録する"}
-        </button>
-      </form>
-
-      <p className="mt-8 text-center text-[0.875rem] leading-relaxed text-[var(--muted)]">
-        {mode === "login" ? (
-          <>
-            初めての方は{" "}
-            <Link href={guestEyePaths.register} className="link-accent">
-              新規登録
-            </Link>
-          </>
-        ) : (
-          <>
-            登録済みの方は{" "}
-            <Link href={guestEyePaths.login} className="link-accent">
-              ログイン
-            </Link>
-          </>
+        {error && lookup.status !== "needsSetup" && (
+          <p className="alert-error mt-5">{error}</p>
         )}
-      </p>
+
+        {showStoreFields && (
+          <button
+            type="submit"
+            disabled={loading || storesLoading || lookupLoading}
+            className="btn-primary mt-7"
+          >
+            {loading
+              ? "処理中..."
+              : lookup.status === "new" || lookup.status === "needsSetup"
+                ? "登録する"
+                : "ログイン"}
+          </button>
+        )}
+      </form>
     </div>
   );
 }

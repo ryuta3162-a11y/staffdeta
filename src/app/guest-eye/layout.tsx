@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "ゲストアイ",
-  description: "週1回ジムを利用する方向けのアプリ",
+  description: "施設利用者向けのフィードバックアプリ",
 };
 
 export default function GuestEyeLayout({

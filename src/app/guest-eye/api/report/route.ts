@@ -13,6 +13,7 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const impression = String(formData.get("impression") || "").trim();
+    const healthRating = Number(formData.get("healthRating") || 0);
     const photoFiles = formData
       .getAll("photos")
       .filter((item): item is File => item instanceof File && item.size > 0);
@@ -20,6 +21,13 @@ export async function POST(request: Request) {
     if (!impression) {
       return NextResponse.json(
         { error: "所感を入力してください" },
+        { status: 400 },
+      );
+    }
+
+    if (!Number.isInteger(healthRating) || healthRating < 1 || healthRating > 5) {
+      return NextResponse.json(
+        { error: "健康・達成感の評価を選択してください" },
         { status: 400 },
       );
     }
@@ -36,6 +44,7 @@ export async function POST(request: Request) {
       storeName: session.storeName,
       staffName: session.staffName,
       impression,
+      healthRating,
       photos: [] as Array<{
         photoBase64: string;
         photoMimeType: string;

@@ -9,4 +9,6 @@ export const guestEyePaths = {
     isStandalone ? `/api/auth/${mode}` : `/guest-eye/api/auth/${mode}`,
   apiLogout: isStandalone ? "/api/auth/logout" : "/guest-eye/api/auth/logout",
   apiReport: isStandalone ? "/api/report" : "/guest-eye/api/report",
+  apiStores: isStandalone ? "/api/stores" : "/guest-eye/api/stores",
+  apiStaffLookup: isStandalone ? "/api/staff/lookup" : "/guest-eye/api/staff/lookup",
 };

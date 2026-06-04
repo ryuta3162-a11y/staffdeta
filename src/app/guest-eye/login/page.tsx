@@ -9,5 +9,5 @@ export default async function GuestEyeLoginPage() {
     redirect(guestEyePaths.home);
   }
 
-  return <GuestEyeAuthForm mode="login" />;
+  return <GuestEyeAuthForm />;
 }

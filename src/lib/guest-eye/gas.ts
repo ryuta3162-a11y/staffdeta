@@ -3,6 +3,9 @@ interface GasResponse {
   error?: string;
   storeName?: string;
   staffName?: string;
+  stores?: Array<{ area: string; territory: string; storeName: string }>;
+  status?: string;
+  message?: string;
 }
 
 export async function callGuestEyeGas(
