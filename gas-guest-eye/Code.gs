@@ -70,9 +70,24 @@ function getStaffSheet_() {
 }
 
 function setupSheets_() {
-  ensureReportHeaders_();
-  ensureStaffHeaders_();
+  forceReportHeaderRow_();
+  forceStaffHeaderRow_();
   return { success: true };
+}
+
+/** Apps Script エディタから1回実行 → 所感・スタッフのヘッダーを正しい形に更新 */
+function setupHeadersNow() {
+  setupSheets_();
+}
+
+function forceReportHeaderRow_() {
+  const headers = getReportHeaders_();
+  getReportSheet_().getRange(1, 1, 1, headers.length).setValues([headers]);
+}
+
+function forceStaffHeaderRow_() {
+  const headers = ["店舗名", "名前", "パスワード", "登録日時"];
+  getStaffSheet_().getRange(1, 1, 1, headers.length).setValues([headers]);
 }
 
 function ensureStaffHeaders_() {
