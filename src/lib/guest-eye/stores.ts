@@ -56,6 +56,14 @@ export function filterStores(
   );
 }
 
+export function findStoresByNames(
+  stores: StoreRecord[],
+  storeNames: string[],
+): StoreRecord[] {
+  const wanted = new Set(storeNames);
+  return stores.filter((store) => wanted.has(store.storeName));
+}
+
 export function groupStoresByArea(stores: StoreRecord[]): Map<string, StoreRecord[]> {
   const grouped = new Map<string, StoreRecord[]>();
   for (const store of stores) {

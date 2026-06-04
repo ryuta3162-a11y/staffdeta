@@ -5,10 +5,12 @@ import {
   type SetStateAction,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import {
   filterStores,
+  findStoresByNames,
   getAreas,
   getTerritories,
   groupStoresByArea,
@@ -20,15 +22,30 @@ import {
 interface StorePickerProps {
   stores: StoreRecord[];
   selectedStores: string[];
-  registeredStores?: string[];
+  /** 既に登録されている店舗名。エリア展開と青選択の初期値に使う */
+  initialStoreNames?: string[];
   onStoresChange: Dispatch<SetStateAction<string[]>>;
   disabled?: boolean;
+}
+
+function expandFiltersForStores(
+  stores: StoreRecord[],
+  storeNames: string[],
+): { areas: Set<string>; territories: Set<string>; openAreas: Set<string> } {
+  const matches = findStoresByNames(stores, storeNames);
+  const areas = new Set<string>();
+  const territories = new Set<string>();
+  for (const store of matches) {
+    areas.add(store.area);
+    territories.add(territoryKey(store.area, store.territory));
+  }
+  return { areas, territories, openAreas: new Set(areas) };
 }
 
 export function StorePicker({
   stores,
   selectedStores,
-  registeredStores = [],
+  initialStoreNames = [],
   onStoresChange,
   disabled,
 }: StorePickerProps) {
@@ -38,15 +55,11 @@ export function StorePicker({
     new Set(),
   );
   const [openAreas, setOpenAreas] = useState<Set<string>>(new Set());
+  const didBootstrapFilters = useRef(false);
 
   const visibleStores = useMemo(
     () => filterStores(stores, selectedAreas, selectedTerritories),
     [stores, selectedAreas, selectedTerritories],
-  );
-
-  const visibleStoreNames = useMemo(
-    () => new Set(visibleStores.map((store) => store.storeName)),
-    [visibleStores],
   );
 
   const groupedStores = useMemo(
@@ -57,16 +70,33 @@ export function StorePicker({
   const selectedSet = useMemo(() => new Set(selectedStores), [selectedStores]);
 
   const visibleSelectedCount = useMemo(
-    () => selectedStores.filter((name) => visibleStoreNames.has(name)).length,
-    [selectedStores, visibleStoreNames],
+    () =>
+      visibleStores.filter((store) => selectedSet.has(store.storeName)).length,
+    [visibleStores, selectedSet],
   );
 
   useEffect(() => {
-    onStoresChange((current) => {
-      const next = current.filter((name) => visibleStoreNames.has(name));
-      return next.length === current.length ? current : next;
-    });
-  }, [visibleStoreNames, onStoresChange]);
+    if (didBootstrapFilters.current || stores.length === 0) {
+      return;
+    }
+
+    const seed =
+      initialStoreNames.length > 0 ? initialStoreNames : selectedStores;
+    if (seed.length === 0) {
+      return;
+    }
+
+    const { areas: nextAreas, territories, openAreas: nextOpen } =
+      expandFiltersForStores(stores, seed);
+    if (nextAreas.size === 0) {
+      return;
+    }
+
+    setSelectedAreas(nextAreas);
+    setSelectedTerritories(territories);
+    setOpenAreas(nextOpen);
+    didBootstrapFilters.current = true;
+  }, [stores, initialStoreNames, selectedStores]);
 
   useEffect(() => {
     if (selectedAreas.size === 0) {
@@ -82,18 +112,21 @@ export function StorePicker({
     });
   }, [selectedAreas]);
 
-  function toggleStore(store: StoreRecord) {
+  function toggleStoreByName(name: string) {
     if (disabled) {
       return;
     }
 
-    const name = store.storeName;
     onStoresChange((current) => {
       if (current.includes(name)) {
         return current.filter((item) => item !== name);
       }
       return [...current, name];
     });
+  }
+
+  function toggleStore(store: StoreRecord) {
+    toggleStoreByName(store.storeName);
   }
 
   function toggleArea(area: string) {
@@ -163,10 +196,47 @@ export function StorePicker({
     });
   }
 
+  const selectionLabel =
+    selectedStores.length === 0
+      ? "まだ選択されていません"
+      : selectedStores.length === 1
+        ? "1店舗で登録します"
+        : `${selectedStores.length}店舗で登録します`;
+
   return (
     <div className="store-filter space-y-5">
+      <section className="store-filter-selection-box">
+        <div className="store-filter-store-head">
+          <h3 className="store-filter-title">登録する店舗</h3>
+          <span className="store-filter-count">{selectionLabel}</span>
+        </div>
+        <p className="store-filter-hint">
+          青いボタンが登録対象です。もう一度タップすると解除できます。店舗を減らしたい場合も、青を外してから保存してください。
+        </p>
+        {selectedStores.length > 0 ? (
+          <div className="store-filter-chips mt-3">
+            {selectedStores.map((name) => (
+              <button
+                key={name}
+                type="button"
+                disabled={disabled}
+                className="store-filter-chip store-filter-chip--on"
+                onClick={() => toggleStoreByName(name)}
+              >
+                {name}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <p className="alert-info mt-3">下のエリアから店舗を選んでください。</p>
+        )}
+      </section>
+
       <section>
         <h3 className="store-filter-title">エリア（複数選択可）</h3>
+        <p className="store-filter-hint">
+          店舗を探すエリアを選びます。登録内容そのものではありません。
+        </p>
         <div className="store-filter-chips">
           {areas.map((area) => (
             <button
@@ -216,14 +286,11 @@ export function StorePicker({
       {visibleStores.length > 0 && (
         <section>
           <div className="store-filter-store-head">
-            <h3 className="store-filter-title">所属店舗を選択（複数選択可）</h3>
+            <h3 className="store-filter-title">店舗一覧（タップで選択・解除）</h3>
             <span className="store-filter-count">
-              {visibleSelectedCount}/{visibleStores.length}
+              表示中 {visibleSelectedCount}/{visibleStores.length}
             </span>
           </div>
-          <p className="store-filter-hint">
-            複数の店舗に所属している場合は、該当する店舗をすべてタップしてください。もう一度タップで解除できます。
-          </p>
           <div className="space-y-3">
             {[...groupedStores.entries()].map(([area, areaStores]) => (
               <div key={area} className="store-filter-accordion">
@@ -257,9 +324,6 @@ export function StorePicker({
                           }}
                         >
                           {store.storeName}
-                          {registeredStores.includes(store.storeName)
-                            ? "（登録済）"
-                            : ""}
                         </button>
                       );
                     })}

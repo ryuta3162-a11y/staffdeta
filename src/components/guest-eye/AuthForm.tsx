@@ -109,16 +109,21 @@ export function GuestEyeAuthForm() {
       }
 
       const status = data.status as LookupStatus;
+      const registered = data.stores || [];
       setLookup({
         status,
         message: data.message,
-        stores: data.stores,
+        stores: registered,
       });
-      setShowEditRegistration(false);
 
       if (status === "existing") {
-        const registered = data.stores || [];
-        setSelectedStores(registered.length === 1 ? [registered[0]] : []);
+        if (showEditRegistration) {
+          setSelectedStores([...registered]);
+        } else {
+          setSelectedStores(registered.length === 1 ? [registered[0]] : []);
+        }
+      } else if (registered.length > 0) {
+        setSelectedStores([...registered]);
       } else {
         setSelectedStores([]);
       }
@@ -135,7 +140,7 @@ export function GuestEyeAuthForm() {
     } finally {
       setLookupLoading(false);
     }
-  }, []);
+  }, [showEditRegistration]);
 
   useEffect(() => {
     const trimmed = staffName.trim();
@@ -237,7 +242,9 @@ export function GuestEyeAuthForm() {
 
   const pageDescription = showLoginForm
     ? "登録済みの方は、店舗とパスワードを選んで再度ログインしてください。"
-    : "名前を入力してから、所属店舗とパスワードを選んでください。";
+    : showEditRegistration
+      ? "青くなっている店舗が現在の登録内容です。外したり足したりしてから保存してください。"
+      : "名前を入力してから、所属店舗とパスワードを選んでください。";
 
   return (
     <div className="w-full">
@@ -324,7 +331,7 @@ export function GuestEyeAuthForm() {
             onClick={() => {
               setShowEditRegistration(true);
               setError("");
-              setSelectedStores([]);
+              setSelectedStores([...registeredStores]);
             }}
           >
             登録情報を変更する
@@ -354,9 +361,16 @@ export function GuestEyeAuthForm() {
             {showRegistrationForm && !storesLoading && (
               <>
                 <StorePicker
+                  key={`${staffName.trim()}-${showEditRegistration ? "edit" : lookup.status}`}
                   stores={stores}
                   selectedStores={selectedStores}
-                  registeredStores={registeredStores}
+                  initialStoreNames={
+                    showEditRegistration || registeredStores.length > 0
+                      ? registeredStores.length > 0
+                        ? registeredStores
+                        : selectedStores
+                      : []
+                  }
                   onStoresChange={setSelectedStores}
                   disabled={loading}
                 />
@@ -410,11 +424,11 @@ export function GuestEyeAuthForm() {
                 ? "処理中..."
                 : showEditRegistration
                   ? selectedStores.length > 1
-                    ? `${selectedStores.length}店舗を登録する`
-                    : "登録情報を更新する"
+                    ? `${selectedStores.length}店舗に変更して保存`
+                    : "1店舗に変更して保存"
                   : selectedStores.length > 1
-                    ? `${selectedStores.length}店舗を登録する`
-                    : "登録する"}
+                    ? `${selectedStores.length}店舗で登録する`
+                    : "1店舗で登録する"}
             </button>
           )}
 

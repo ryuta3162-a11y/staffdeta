@@ -465,6 +465,13 @@ select.field-input {
   color: #5f6368;
 }
 
+.store-filter-selection-box {
+  border: 2px solid var(--accent);
+  border-radius: 0.5rem;
+  background: var(--accent-soft);
+  padding: 0.75rem;
+}
+
 .store-filter-group-label {
   margin-bottom: 0.5rem;
   font-size: 0.8125rem;

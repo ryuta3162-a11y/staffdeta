@@ -95,14 +95,12 @@ function registerStaff_(data) {
   }
 
   var profile = getStaffProfileByName_(staffName);
-  var mergedStores = mergeStoreNames_(
-    profile ? profile.storeNames : [],
-    storeNames,
-  );
+  // 送信された店舗一覧でそのまま上書き（追加マージはしない）
+  var finalStores = storeNames.slice();
 
   if (!profile) {
     getStaffSheet_().appendRow([
-      formatStoreNames_(mergedStores),
+      formatStoreNames_(finalStores),
       staffName,
       password,
       formatNow_(),
@@ -110,15 +108,15 @@ function registerStaff_(data) {
   } else {
     var targetRow = findStaffSetupRow_(staffName);
     var rowIndex = targetRow ? targetRow.rowIndex : profile.rowIndex;
-    updateStaffProfileRow_(rowIndex, mergedStores, staffName, password);
+    updateStaffProfileRow_(rowIndex, finalStores, staffName, password);
     consolidateStaffRows_(staffName);
   }
 
   return {
     success: true,
-    storeName: mergedStores[0] || "",
+    storeName: finalStores[0] || "",
     staffName: staffName,
-    stores: mergedStores,
+    stores: finalStores,
   };
 }
 
