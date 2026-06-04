@@ -9,36 +9,27 @@ interface GasResponse {
   savedPassword?: string;
 }
 
-async function fetchGuestEyeGas(url: string, init: RequestInit): Promise<Response> {
-  let response = await fetch(url, { ...init, redirect: "manual" });
+function parseGasResponse(text: string): GasResponse {
+  const cleaned = text
+    .trim()
+    .replace(/^\uFEFF/, "")
+    .replace(/^\)\]\}'\n?/, "");
 
-  if (response.status >= 300 && response.status < 400) {
-    const location = response.headers.get("location");
-    if (location) {
-      response = await fetch(location, { ...init, redirect: "follow" });
-    }
+  if (cleaned.startsWith("<!DOCTYPE") || cleaned.startsWith("<html")) {
+    throw new Error(
+      "GAS（Google Apps Script）が HTML を返しました。Vercel の GUEST_EYE_GAS_WEB_APP_URL と API_SECRET を確認してください",
+    );
   }
 
-  return response;
-}
-
-function parseGasResponse(text: string): GasResponse {
-  const cleaned = text.trim().replace(/^\uFEFF/, "");
+  if (!cleaned.startsWith("{") && !cleaned.startsWith("[")) {
+    throw new Error(
+      "GAS から JSON 以外の応答が返りました。Webアプリの再デプロイと API_SECRET を確認してください",
+    );
+  }
 
   try {
     return JSON.parse(cleaned) as GasResponse;
   } catch {
-    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]) as GasResponse;
-    }
-
-    if (cleaned.startsWith("<!DOCTYPE") || cleaned.startsWith("<html")) {
-      throw new Error(
-        "GAS（Google Apps Script）が正しく応答していません。Vercel の GUEST_EYE_GAS_WEB_APP_URL と API_SECRET を確認してください",
-      );
-    }
-
     throw new Error(
       "GAS からの応答を読み取れませんでした。Webアプリの再デプロイを確認してください",
     );
@@ -57,11 +48,12 @@ export async function callGuestEyeGas(
     );
   }
 
-  const response = await fetchGuestEyeGas(url, {
+  const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ ...payload, secret }),
     cache: "no-store",
+    redirect: "follow",
   });
 
   const data = parseGasResponse(await response.text());
@@ -77,7 +69,9 @@ export async function registerGuestEyeStores(
   staffName: string,
   password: string,
 ): Promise<GasResponse> {
-  const uniqueStores = [...new Set(storeNames.map((name) => name.trim()).filter(Boolean))];
+  const uniqueStores = [
+    ...new Set(storeNames.map((name) => name.trim()).filter(Boolean)),
+  ];
   if (uniqueStores.length === 0) {
     throw new Error("店舗を1つ以上選んでください");
   }
