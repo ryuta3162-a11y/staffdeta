@@ -358,6 +358,9 @@ select.field-input {
 }
 
 .guest-eye-review-form {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   border: 1px solid #dadce0;
   border-radius: 16px;
   background: linear-gradient(180deg, #ffffff 0%, #fafbff 100%);
@@ -442,6 +445,8 @@ select.field-input {
 
 .guest-eye-review-textarea {
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   min-height: 8rem;
   border: 1.5px solid #dadce0;
   border-radius: 12px;
@@ -601,14 +606,25 @@ select.field-input {
   }
 }
 
+.guest-eye-review-actions {
+  padding: 1.25rem;
+  box-sizing: border-box;
+}
+
 .guest-eye-review-alert {
-  margin: 1.25rem 1.25rem 0;
+  margin: 0 0 1rem;
+}
+
+.guest-eye-review-alert:last-of-type {
+  margin-bottom: 1rem;
 }
 
 .guest-eye-review-submit {
   display: block;
-  width: calc(100% - 2.5rem);
-  margin: 1.25rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 0;
   border: none;
   border-radius: 12px;
   background: linear-gradient(180deg, #1a73e8 0%, #1557b0 100%);

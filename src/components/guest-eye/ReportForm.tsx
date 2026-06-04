@@ -294,16 +294,18 @@ export function GuestEyeReportForm({ storeName, staffName }: ReportFormProps) {
           />
         </ReviewStep>
 
-        {error && <p className="alert-error guest-eye-review-alert">{error}</p>}
-        {success && <p className="alert-success guest-eye-review-alert">送信しました。</p>}
+        <div className="guest-eye-review-actions">
+          {error && <p className="alert-error guest-eye-review-alert">{error}</p>}
+          {success && <p className="alert-success guest-eye-review-alert">送信しました。</p>}
 
-        <button
-          type="submit"
-          disabled={loading || photoLoading}
-          className="guest-eye-review-submit"
-        >
-          {loading ? "送信中..." : "投稿する"}
-        </button>
+          <button
+            type="submit"
+            disabled={loading || photoLoading}
+            className="guest-eye-review-submit"
+          >
+            {loading ? "送信中..." : "投稿する"}
+          </button>
+        </div>
       </form>
     </div>
   );

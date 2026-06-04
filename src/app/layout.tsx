@@ -27,7 +27,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} page-bg min-h-screen antialiased`}
       >
-        <main className="mx-auto flex min-h-screen max-w-lg flex-col justify-center px-5 py-10 sm:max-w-xl sm:px-8 sm:py-14">
+        <main className="mx-auto flex min-h-screen w-full max-w-lg min-w-0 flex-col justify-center px-5 py-10 sm:max-w-xl sm:px-8 sm:py-14">
           {children}
         </main>
       </body>
