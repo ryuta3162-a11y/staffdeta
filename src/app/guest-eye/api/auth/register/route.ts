@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/guest-eye/auth";import { registerSchema } from "@/lib/guest-eye/authSchema";
+import { getSession } from "@/lib/guest-eye/auth";
+import { registerSchema } from "@/lib/guest-eye/authSchema";
 import { callGuestEyeGas } from "@/lib/guest-eye/gas";
 
 export async function POST(request: Request) {
