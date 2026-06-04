@@ -407,6 +407,12 @@ select.field-input {
   margin-top: 1.25rem;
 }
 
+.guest-eye-panel .btn-ghost.guest-eye-panel-submit {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  font-size: 0.875rem;
+}
+
 .guest-eye-muted {
   font-size: 0.8125rem;
   font-weight: 500;

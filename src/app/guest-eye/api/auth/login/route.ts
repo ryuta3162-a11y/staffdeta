@@ -34,14 +34,18 @@ export async function POST(request: Request) {
       password,
     });
 
-    const lookup = await callGuestEyeGas({
-      action: "lookupStaff",
-      staffName,
-    });
-    const registeredStores =
-      lookup.status === "existing" && Array.isArray(lookup.stores)
-        ? (lookup.stores as string[])
-        : [result.storeName || storeName.trim()];
+    let registeredStores = [result.storeName || storeName.trim()];
+    try {
+      const lookup = await callGuestEyeGas({
+        action: "lookupStaff",
+        staffName,
+      });
+      if (lookup.status === "existing" && Array.isArray(lookup.stores)) {
+        registeredStores = lookup.stores as string[];
+      }
+    } catch {
+      // ログインは成功しているため、lookup 失敗時は選択店舗のみ保持
+    }
 
     const session = await getSession();
     session.storeNames = registeredStores;
