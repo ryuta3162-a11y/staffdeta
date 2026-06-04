@@ -266,9 +266,9 @@ export function GuestEyeAuthForm() {
             {lookupLoading && <p className="guest-eye-muted">確認中...</p>}
 
             <section>
-              <h3 className="store-filter-title">ログインする店舗</h3>
+              <h3 className="store-filter-title">ログインする店舗（必須）</h3>
               <p className="store-filter-hint mb-3">
-                登録済みの店舗から1つ選んでください。
+                下の店舗名を1つタップして青くしてから、「再度ログイン」を押してください。
               </p>
               <div className="store-filter-chips">
                 {registeredStores.map((store) => (
@@ -277,12 +277,20 @@ export function GuestEyeAuthForm() {
                     type="button"
                     disabled={loading}
                     className={`store-filter-chip ${selectedStores.includes(store) ? "store-filter-chip--on" : ""}`}
-                    onClick={() => selectLoginStore(store)}
+                    onClick={() => {
+                      selectLoginStore(store);
+                      setError("");
+                    }}
                   >
                     {store}
                   </button>
                 ))}
               </div>
+              {!lookupLoading &&
+                registeredStores.length > 0 &&
+                selectedStores.length === 0 && (
+                  <p className="alert-info mt-3">店舗が未選択です。1つタップしてください。</p>
+                )}
             </section>
 
             <label className="block">
@@ -303,12 +311,7 @@ export function GuestEyeAuthForm() {
 
           <button
             type="submit"
-            disabled={
-              loading ||
-              lookupLoading ||
-              selectedStores.length !== 1 ||
-              !password
-            }
+            disabled={loading || lookupLoading || !password.trim()}
             className="btn-primary guest-eye-panel-submit"
           >
             {loading ? "処理中..." : "再度ログイン"}
