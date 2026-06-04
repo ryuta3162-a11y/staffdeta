@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     const { storeName, storeNames, staffName, password } = parsed.data;
     const result = await callGuestEyeGas({
       action: "register",
-      storeName,
+      storeName: storeNames?.[0] || storeName,
       storeNames,
       staffName,
       password,

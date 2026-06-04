@@ -29,11 +29,16 @@ export async function callGuestEyeGas(
     redirect: "follow",
   });
 
-  const text = await response.text();
+  const text = (await response.text()).trim().replace(/^\uFEFF/, "");
   let data: GasResponse;
   try {
     data = JSON.parse(text) as GasResponse;
   } catch {
+    if (text.startsWith("<!DOCTYPE") || text.startsWith("<html")) {
+      throw new Error(
+        "GAS（Google Apps Script）が正しく応答していません。Webアプリの再デプロイを管理者に依頼してください",
+      );
+    }
     throw new Error(
       "GAS からの応答を読み取れませんでした。Webアプリの再デプロイを確認してください",
     );

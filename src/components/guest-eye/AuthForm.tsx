@@ -4,7 +4,6 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { StorePicker } from "@/components/guest-eye/StorePicker";
 import { guestEyePaths } from "@/lib/guest-eye/paths";
-import { GUEST_EYE_BUILD_LABEL } from "@/lib/guest-eye/buildLabel";
 import { loadSavedAuth, saveSavedAuth } from "@/lib/guest-eye/savedLogin";
 import type { StoreRecord } from "@/lib/guest-eye/stores";
 
@@ -180,7 +179,7 @@ export function GuestEyeAuthForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           storeNames: isRegister ? selectedStores : undefined,
-          storeName: isRegister ? undefined : selectedStores[0],
+          storeName: selectedStores[0],
           staffName: trimmedName,
           password,
         }),
@@ -307,8 +306,6 @@ export function GuestEyeAuthForm() {
           </button>
         )}
       </form>
-
-      <p className="guest-eye-build-label">更新 {GUEST_EYE_BUILD_LABEL}</p>
     </div>
   );
 }

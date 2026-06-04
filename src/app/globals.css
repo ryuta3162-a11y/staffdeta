@@ -413,14 +413,6 @@ select.field-input {
   color: var(--muted);
 }
 
-.guest-eye-build-label {
-  margin-top: 1rem;
-  text-align: center;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  color: #9aa0a6;
-}
-
 .guest-eye-section + .guest-eye-section {
   border-top: 2px solid #d0d0d0;
   margin-top: 1.25rem;
