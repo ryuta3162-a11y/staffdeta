@@ -193,7 +193,7 @@ export function GuestEyeReportForm({ storeName, staffName }: ReportFormProps) {
         <FormSection
           step="1"
           title="お客様目線の気づき"
-          hint="施設利用中の気づきをお客様目線で率直に書いてください。（清掃、設備の故障、スタッフの接客など）"
+          hint="施設利用中の気づきをお客様目線で率直に書いてください"
         >
           <textarea
             value={impression}
@@ -284,7 +284,7 @@ export function GuestEyeReportForm({ storeName, staffName }: ReportFormProps) {
 
         <FormSection
           step="3"
-          title="施設の利用が達成感や健康づくりにどのくらい繋がっていますか？"
+          title="施設利用が達成感や健康づくりに繋がっていますか？"
         >
           <StarRating
             value={healthRating}
