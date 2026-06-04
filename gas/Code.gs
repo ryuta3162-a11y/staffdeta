@@ -1,6 +1,10 @@
 /**
  * ナイスプレーシェア - Google Apps Script バックエンド
  * （ゲストアイ用は gas-guest-eye/Code.gs を使用）
+ *
+ * スプレッドシートの1行目（ヘッダー）は管理者が手動で設定済みである前提。
+ * 所感: A店舗名 B名前 C所感 D〜H写真1〜5 I送信日時
+ * スタッフ: A店舗名 B名前 Cパスワード D登録日時
  */
 
 const CONFIG = {
@@ -38,7 +42,7 @@ function doPost(e) {
 
     switch (data.action) {
       case "setup":
-        return jsonResponse_(setupSheets_());
+        return jsonResponse_({ success: true });
       case "register":
         return jsonResponse_(registerStaff_(data));
       case "login":
@@ -74,77 +78,20 @@ function getSpreadsheet_() {
   return SpreadsheetApp.getActiveSpreadsheet();
 }
 
-function getReportSheet_() {
-  const ss = getSpreadsheet_();
-  let sheet = ss.getSheetByName(CONFIG.REPORT_SHEET);
+function getSheetByName_(sheetName) {
+  const sheet = getSpreadsheet_().getSheetByName(sheetName);
   if (!sheet) {
-    sheet = ss.insertSheet(CONFIG.REPORT_SHEET);
+    throw new Error("シート「" + sheetName + "」が見つかりません");
   }
   return sheet;
+}
+
+function getReportSheet_() {
+  return getSheetByName_(CONFIG.REPORT_SHEET);
 }
 
 function getStaffSheet_() {
-  const ss = getSpreadsheet_();
-  let sheet = ss.getSheetByName(CONFIG.STAFF_SHEET);
-  if (!sheet) {
-    sheet = ss.insertSheet(CONFIG.STAFF_SHEET);
-  }
-  return sheet;
-}
-
-function setupSheets_() {
-  ensureReportHeaders_();
-  ensureStaffHeaders_();
-  return { success: true };
-}
-
-function ensureStaffHeaders_() {
-  ensureSheetHeaders_(getStaffSheet_(), ["店舗名", "名前", "パスワード", "登録日時"]);
-}
-
-function getReportHeaders_() {
-  return [
-    "店舗名",
-    "名前",
-    "所感",
-    "写真1",
-    "写真2",
-    "写真3",
-    "写真4",
-    "写真5",
-    "送信日時",
-  ];
-}
-
-function ensureReportHeaders_() {
-  const headers = getReportHeaders_();
-  ensureSheetHeaders_(getReportSheet_(), headers);
-  syncReportHeaderRow_(headers);
-}
-
-function syncReportHeaderRow_(headers) {
-  const sheet = getReportSheet_();
-  const current = sheet.getRange(1, 1, 1, headers.length).getValues()[0];
-  for (var i = 0; i < headers.length; i++) {
-    if (String(current[i] || "").trim() !== headers[i]) {
-      sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-      return;
-    }
-  }
-}
-
-function ensureSheetHeaders_(sheet, headers) {
-  const lastRow = sheet.getLastRow();
-  if (lastRow === 0) {
-    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-    return;
-  }
-
-  const firstCell = String(sheet.getRange(1, 1).getValue() || "").trim();
-  if (firstCell !== headers[0]) {
-    sheet.insertRowBefore(1);
-    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-  }
+  return getSheetByName_(CONFIG.STAFF_SHEET);
 }
 
 function registerStaff_(data) {
@@ -164,9 +111,7 @@ function registerStaff_(data) {
     throw new Error("この店舗名・名前の組み合わせは既に登録されています");
   }
 
-  ensureStaffHeaders_();
-  const staffSheet = getStaffSheet_();
-  staffSheet.appendRow([
+  getStaffSheet_().appendRow([
     storeName,
     staffName,
     hashPassword_(password),
@@ -218,8 +163,6 @@ function submitReport_(data) {
   if (!impression) {
     throw new Error("所感を入力してください");
   }
-
-  ensureReportHeaders_();
 
   var photoUrls = collectPhotoUrls_(data, storeName, staffName);
 

@@ -1,6 +1,10 @@
 /**
  * ゲストアイ - Google Apps Script バックエンド
- * 週1回ジム利用者向け・スプレッドシート・Drive への読み書きを担当
+ *
+ * スプレッドシートの1行目（ヘッダー）は管理者が手動で設定済みである前提。
+ * 所感: A店舗名 B名前 C所感 D〜H写真1〜5 I健康・達成感 J送信日時
+ * スタッフ: A店舗名 B名前 Cパスワード D登録日時
+ * 店舗データ: Aエリア Bテリトリー C店舗名
  */
 
 const CONFIG = {
@@ -21,7 +25,7 @@ function doPost(e) {
 
     switch (data.action) {
       case "setup":
-        return jsonResponse_(setupSheets_());
+        return jsonResponse_({ success: true });
       case "register":
         return jsonResponse_(registerStaff_(data));
       case "login":
@@ -51,93 +55,20 @@ function getSpreadsheet_() {
   return SpreadsheetApp.getActiveSpreadsheet();
 }
 
-function getReportSheet_() {
-  const ss = getSpreadsheet_();
-  let sheet = ss.getSheetByName(CONFIG.REPORT_SHEET);
+function getSheetByName_(sheetName) {
+  const sheet = getSpreadsheet_().getSheetByName(sheetName);
   if (!sheet) {
-    sheet = ss.insertSheet(CONFIG.REPORT_SHEET);
+    throw new Error("シート「" + sheetName + "」が見つかりません");
   }
   return sheet;
+}
+
+function getReportSheet_() {
+  return getSheetByName_(CONFIG.REPORT_SHEET);
 }
 
 function getStaffSheet_() {
-  const ss = getSpreadsheet_();
-  let sheet = ss.getSheetByName(CONFIG.STAFF_SHEET);
-  if (!sheet) {
-    sheet = ss.insertSheet(CONFIG.STAFF_SHEET);
-  }
-  return sheet;
-}
-
-function setupSheets_() {
-  forceReportHeaderRow_();
-  forceStaffHeaderRow_();
-  return { success: true };
-}
-
-/** Apps Script エディタから1回実行 → 所感・スタッフのヘッダーを正しい形に更新 */
-function setupHeadersNow() {
-  setupSheets_();
-}
-
-function forceReportHeaderRow_() {
-  const headers = getReportHeaders_();
-  getReportSheet_().getRange(1, 1, 1, headers.length).setValues([headers]);
-}
-
-function forceStaffHeaderRow_() {
-  const headers = ["店舗名", "名前", "パスワード", "登録日時"];
-  getStaffSheet_().getRange(1, 1, 1, headers.length).setValues([headers]);
-}
-
-function ensureStaffHeaders_() {
-  ensureSheetHeaders_(getStaffSheet_(), ["店舗名", "名前", "パスワード", "登録日時"]);
-}
-
-function getReportHeaders_() {
-  return [
-    "店舗名",
-    "名前",
-    "所感",
-    "写真1",
-    "写真2",
-    "写真3",
-    "写真4",
-    "写真5",
-    "健康・達成感（5段階）",
-    "送信日時",
-  ];
-}
-
-function ensureReportHeaders_() {
-  const headers = getReportHeaders_();
-  ensureSheetHeaders_(getReportSheet_(), headers);
-  syncReportHeaderRow_(headers);
-}
-
-function syncReportHeaderRow_(headers) {
-  const sheet = getReportSheet_();
-  const current = sheet.getRange(1, 1, 1, headers.length).getValues()[0];
-  for (var i = 0; i < headers.length; i++) {
-    if (String(current[i] || "").trim() !== headers[i]) {
-      sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-      return;
-    }
-  }
-}
-
-function ensureSheetHeaders_(sheet, headers) {
-  const lastRow = sheet.getLastRow();
-  if (lastRow === 0) {
-    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-    return;
-  }
-
-  const firstCell = String(sheet.getRange(1, 1).getValue() || "").trim();
-  if (firstCell !== headers[0]) {
-    sheet.insertRowBefore(1);
-    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-  }
+  return getSheetByName_(CONFIG.STAFF_SHEET);
 }
 
 function registerStaff_(data) {
@@ -155,7 +86,6 @@ function registerStaff_(data) {
 
   const setupRow = findStaffSetupRow_(staffName);
   if (setupRow) {
-    ensureStaffHeaders_();
     updateStaffRow_(setupRow.rowIndex, storeName, staffName, password);
     return {
       success: true,
@@ -168,7 +98,6 @@ function registerStaff_(data) {
   if (existing) {
     const stored = String(existing.passwordHash || "").trim();
     if (!stored) {
-      ensureStaffHeaders_();
       updateStaffRow_(existing.rowIndex, storeName, staffName, password);
       return {
         success: true,
@@ -179,9 +108,7 @@ function registerStaff_(data) {
     throw new Error("この店舗名・名前の組み合わせは既に登録されています");
   }
 
-  ensureStaffHeaders_();
-  const staffSheet = getStaffSheet_();
-  staffSheet.appendRow([
+  getStaffSheet_().appendRow([
     storeName,
     staffName,
     password,
@@ -257,11 +184,7 @@ function lookupStaff_(data) {
 }
 
 function getStoreData_() {
-  const ss = getSpreadsheet_();
-  const sheet = ss.getSheetByName(CONFIG.STORE_DATA_SHEET);
-  if (!sheet) {
-    throw new Error("店舗データシートが見つかりません");
-  }
+  const sheet = getSheetByName_(CONFIG.STORE_DATA_SHEET);
 
   const values = sheet.getDataRange().getValues();
   const stores = [];
@@ -318,8 +241,6 @@ function submitReport_(data) {
   if (!healthRating || healthRating < 1 || healthRating > 5) {
     throw new Error("健康・達成感の評価を選択してください");
   }
-
-  ensureReportHeaders_();
 
   var photoUrls = collectPhotoUrls_(data, storeName, staffName);
 
