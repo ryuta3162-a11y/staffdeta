@@ -4,7 +4,7 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { StorePicker } from "@/components/guest-eye/StorePicker";
 import { guestEyePaths } from "@/lib/guest-eye/paths";
-import { loadSavedName, saveSavedName } from "@/lib/guest-eye/savedLogin";
+import { loadSavedAuth, saveSavedAuth } from "@/lib/guest-eye/savedLogin";
 import type { StoreRecord } from "@/lib/guest-eye/stores";
 
 type LookupStatus = "idle" | "new" | "needsSetup" | "existing";
@@ -32,8 +32,27 @@ export function GuestEyeAuthForm() {
     lookup.status === "existing";
 
   useEffect(() => {
-    setStaffName(loadSavedName());
+    const saved = loadSavedAuth();
+    if (!saved) {
+      return;
+    }
+
+    setStaffName(saved.staffName);
+    setPassword(saved.password);
   }, []);
+
+  useEffect(() => {
+    const trimmed = staffName.trim();
+    if (!trimmed || !password) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      saveSavedAuth({ staffName: trimmed, password });
+    }, 300);
+
+    return () => window.clearTimeout(timer);
+  }, [staffName, password]);
 
   useEffect(() => {
     async function fetchStores() {
@@ -152,7 +171,7 @@ export function GuestEyeAuthForm() {
         throw new Error(data.error || "エラーが発生しました");
       }
 
-      saveSavedName(trimmedName);
+      saveSavedAuth({ staffName: trimmedName, password });
       window.location.href = guestEyePaths.home;
     } catch (submitError) {
       setError(
