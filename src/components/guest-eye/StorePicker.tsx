@@ -117,17 +117,8 @@ export function StorePicker({
     });
   }
 
-  const territoryCount = selectedTerritories.size;
-
   return (
     <div className="store-filter space-y-5">
-      <div className="store-filter-progress">
-        <span>エリア {selectedAreas.size}</span>
-        <span>テリトリー {territoryCount}</span>
-        <span>店舗 {visibleStores.length}件</span>
-        <span>{storeName ? "選択済み" : "未選択"}</span>
-      </div>
-
       <section>
         <h3 className="store-filter-title">エリア（複数選択可）</h3>
         <div className="store-filter-chips">
