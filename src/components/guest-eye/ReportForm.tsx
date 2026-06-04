@@ -21,7 +21,7 @@ interface PhotoItem {
 
 const MAX_PHOTOS = 5;
 
-function ReviewStep({
+function FormSection({
   step,
   title,
   hint,
@@ -33,15 +33,13 @@ function ReviewStep({
   children: ReactNode;
 }) {
   return (
-    <section className="guest-eye-review-section">
-      <div className="guest-eye-step-head">
-        <span className="guest-eye-step-badge">{step}</span>
-        <div>
-          <h2 className="guest-eye-review-label">{title}</h2>
-          {hint && <p className="guest-eye-review-hint">{hint}</p>}
-        </div>
-      </div>
-      <div className="guest-eye-step-body">{children}</div>
+    <section className="guest-eye-section">
+      <h2 className="guest-eye-section-title">
+        <span className="guest-eye-section-step">{step}</span>
+        {title}
+      </h2>
+      {hint && <p className="guest-eye-section-hint">{hint}</p>}
+      <div className="guest-eye-section-body">{children}</div>
     </section>
   );
 }
@@ -191,8 +189,8 @@ export function GuestEyeReportForm({ storeName, staffName }: ReportFormProps) {
         action={<GuestEyeLogoutButton />}
       />
 
-      <form onSubmit={handleSubmit} className="guest-eye-review-form">
-        <ReviewStep
+      <form onSubmit={handleSubmit} className="guest-eye-panel">
+        <FormSection
           step="1"
           title="お客様目線の気づき"
           hint="施設利用中の気づきをお客様目線で率直に書いてください。（清掃、設備の故障、スタッフの接客など）"
@@ -200,19 +198,19 @@ export function GuestEyeReportForm({ storeName, staffName }: ReportFormProps) {
           <textarea
             value={impression}
             onChange={(event) => setImpression(event.target.value)}
-            className="guest-eye-review-textarea"
+            className="field-input min-h-44 resize-y leading-relaxed"
             placeholder="例：ストレッチエリア利用中に、スタッフの接客が丁寧で印象に残りました"
             required
           />
-        </ReviewStep>
+        </FormSection>
 
-        <ReviewStep
+        <FormSection
           step="2"
           title="写真"
           hint="清掃や設備の不具合など、伝えたいことがあれば画像を添付してください"
         >
-          <div className="guest-eye-upload-actions">
-            <label className="guest-eye-upload-btn">
+          <div className="upload-actions">
+            <label className="upload-btn">
               <input
                 type="file"
                 accept="image/*"
@@ -227,11 +225,11 @@ export function GuestEyeReportForm({ storeName, staffName }: ReportFormProps) {
                 }}
                 className="sr-only"
               />
-              <span className="guest-eye-upload-btn-title">カメラで撮影</span>
-              <span className="guest-eye-upload-btn-desc">1枚ずつ追加</span>
+              <span className="upload-btn-title">カメラで撮影</span>
+              <span className="upload-btn-desc">1枚ずつ追加</span>
             </label>
 
-            <label className="guest-eye-upload-btn">
+            <label className="upload-btn">
               <input
                 type="file"
                 accept="image/*"
@@ -245,16 +243,18 @@ export function GuestEyeReportForm({ storeName, staffName }: ReportFormProps) {
                 }}
                 className="sr-only"
               />
-              <span className="guest-eye-upload-btn-title">画像を添付</span>
-              <span className="guest-eye-upload-btn-desc">フォトから選択</span>
+              <span className="upload-btn-title">画像を添付</span>
+              <span className="upload-btn-desc">フォトから選択</span>
             </label>
           </div>
 
-          <p className="guest-eye-photo-count">
+          <p className="guest-eye-muted mt-3 text-center">
             最大{MAX_PHOTOS}枚（{photos.length}/{MAX_PHOTOS}）
           </p>
 
-          {photoLoading && <p className="guest-eye-photo-status">写真を準備中...</p>}
+          {photoLoading && (
+            <p className="guest-eye-muted mt-3 text-center">写真を準備中...</p>
+          )}
 
           {photos.length > 0 && (
             <div className="photo-grid mt-4">
@@ -280,9 +280,9 @@ export function GuestEyeReportForm({ storeName, staffName }: ReportFormProps) {
               ))}
             </div>
           )}
-        </ReviewStep>
+        </FormSection>
 
-        <ReviewStep
+        <FormSection
           step="3"
           title="施設の利用が達成感や健康づくりにどのくらい繋がっていますか？"
         >
@@ -292,20 +292,18 @@ export function GuestEyeReportForm({ storeName, staffName }: ReportFormProps) {
             disabled={loading}
             name="健康・達成感の評価"
           />
-        </ReviewStep>
+        </FormSection>
 
-        <div className="guest-eye-review-actions">
-          {error && <p className="alert-error guest-eye-review-alert">{error}</p>}
-          {success && <p className="alert-success guest-eye-review-alert">送信しました。</p>}
+        {error && <p className="alert-error guest-eye-panel-alert">{error}</p>}
+        {success && <p className="alert-success guest-eye-panel-alert">送信しました。</p>}
 
-          <button
-            type="submit"
-            disabled={loading || photoLoading}
-            className="guest-eye-review-submit"
-          >
-            {loading ? "送信中..." : "投稿する"}
-          </button>
-        </div>
+        <button
+          type="submit"
+          disabled={loading || photoLoading}
+          className="btn-primary guest-eye-panel-submit"
+        >
+          {loading ? "送信中..." : "投稿する"}
+        </button>
       </form>
     </div>
   );

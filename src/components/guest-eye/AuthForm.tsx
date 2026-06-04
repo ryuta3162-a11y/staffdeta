@@ -17,8 +17,6 @@ interface LookupResult {
 
 export function GuestEyeAuthForm() {
   const [staffName, setStaffName] = useState("");
-  const [area, setArea] = useState("");
-  const [territory, setTerritory] = useState("");
   const [storeName, setStoreName] = useState("");
   const [password, setPassword] = useState("");
   const [stores, setStores] = useState<StoreRecord[]>([]);
@@ -113,17 +111,6 @@ export function GuestEyeAuthForm() {
     return () => window.clearTimeout(timer);
   }, [staffName, runLookup]);
 
-  function handleAreaChange(nextArea: string) {
-    setArea(nextArea);
-    setTerritory("");
-    setStoreName("");
-  }
-
-  function handleTerritoryChange(nextTerritory: string) {
-    setTerritory(nextTerritory);
-    setStoreName("");
-  }
-
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError("");
@@ -184,7 +171,7 @@ export function GuestEyeAuthForm() {
         description="名前を入力してから、所属店舗とパスワードを選んでください。"
       />
 
-      <form onSubmit={handleSubmit} className="card p-6 sm:p-8">
+      <form onSubmit={handleSubmit} className="guest-eye-panel">
         <div className="space-y-5">
           <label className="block">
             <span className="field-label">名前</span>
@@ -200,7 +187,7 @@ export function GuestEyeAuthForm() {
           </label>
 
           {lookupLoading && (
-            <p className="text-[0.8125rem] text-[var(--muted)]">確認中...</p>
+            <p className="guest-eye-muted">確認中...</p>
           )}
 
           {lookup.status === "needsSetup" && lookup.message && (
@@ -211,12 +198,8 @@ export function GuestEyeAuthForm() {
             <>
               <StorePicker
                 stores={stores}
-                area={area}
-                territory={territory}
                 storeName={storeName}
                 registeredStores={lookup.stores || []}
-                onAreaChange={handleAreaChange}
-                onTerritoryChange={handleTerritoryChange}
                 onStoreChange={setStoreName}
                 disabled={loading}
               />
@@ -246,21 +229,19 @@ export function GuestEyeAuthForm() {
           )}
 
           {storesLoading && staffName.trim() && (
-            <p className="text-[0.8125rem] text-[var(--muted)]">
-              店舗データを読み込み中...
-            </p>
+            <p className="guest-eye-muted">店舗データを読み込み中...</p>
           )}
         </div>
 
         {error && lookup.status !== "needsSetup" && (
-          <p className="alert-error mt-5">{error}</p>
+          <p className="alert-error guest-eye-panel-alert">{error}</p>
         )}
 
         {showStoreFields && (
           <button
             type="submit"
             disabled={loading || storesLoading || lookupLoading}
-            className="btn-primary mt-7"
+            className="btn-primary guest-eye-panel-submit"
           >
             {loading
               ? "処理中..."

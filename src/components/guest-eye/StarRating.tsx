@@ -23,7 +23,7 @@ export function StarRating({ value, onChange, disabled, name }: StarRatingProps)
             aria-checked={value === star}
             aria-label={`${star}つ星`}
             disabled={disabled}
-            className={`star-rating-btn ${value >= star ? "star-rating-btn--active" : ""} ${value === star ? "star-rating-btn--selected" : ""}`}
+            className={`star-rating-btn ${value >= star ? "star-rating-btn--active" : ""}`}
             onClick={() => onChange(star)}
           >
             <svg viewBox="0 0 24 24" aria-hidden="true" className="star-rating-icon">
