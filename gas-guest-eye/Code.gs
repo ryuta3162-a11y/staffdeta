@@ -7,6 +7,7 @@ const CONFIG = {
   REPORT_SHEET: "所感",
   STAFF_SHEET: "スタッフ",
   STORE_DATA_SHEET: "店舗データ",
+  MAX_PHOTO_COLUMNS: 5,
 };
 
 function doGet() {
@@ -78,19 +79,35 @@ function ensureStaffHeaders_() {
   ensureSheetHeaders_(getStaffSheet_(), ["店舗名", "名前", "パスワード", "登録日時"]);
 }
 
-function ensureReportHeaders_() {
-  const headers = [
+function getReportHeaders_() {
+  return [
     "店舗名",
     "名前",
     "所感",
-    "写真",
+    "写真1",
+    "写真2",
+    "写真3",
+    "写真4",
+    "写真5",
     "健康・達成感（5段階）",
     "送信日時",
   ];
+}
+
+function ensureReportHeaders_() {
+  const headers = getReportHeaders_();
   ensureSheetHeaders_(getReportSheet_(), headers);
+  syncReportHeaderRow_(headers);
+}
+
+function syncReportHeaderRow_(headers) {
   const sheet = getReportSheet_();
-  if (String(sheet.getRange(1, 5).getValue() || "").trim() !== headers[4]) {
-    sheet.getRange(1, 5).setValue(headers[4]);
+  const current = sheet.getRange(1, 1, 1, headers.length).getValues()[0];
+  for (var i = 0; i < headers.length; i++) {
+    if (String(current[i] || "").trim() !== headers[i]) {
+      sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+      return;
+    }
   }
 }
 
@@ -289,24 +306,41 @@ function submitReport_(data) {
 
   ensureReportHeaders_();
 
-  let photoUrl = "";
+  var photoUrls = collectPhotoUrls_(data, storeName, staffName);
+
+  getReportSheet_().appendRow([
+    storeName,
+    staffName,
+    impression,
+    photoUrls[0],
+    photoUrls[1],
+    photoUrls[2],
+    photoUrls[3],
+    photoUrls[4],
+    healthRating,
+    formatNow_(),
+  ]);
+
+  return { success: true };
+}
+
+function collectPhotoUrls_(data, storeName, staffName) {
+  var urls = ["", "", "", "", ""];
+  var maxPhotos = CONFIG.MAX_PHOTO_COLUMNS;
+
   if (data.photos && data.photos.length) {
-    const urls = [];
-    for (var i = 0; i < data.photos.length; i++) {
+    for (var i = 0; i < data.photos.length && i < maxPhotos; i++) {
       var photo = data.photos[i];
-      urls.push(
-        uploadPhoto_(
-          photo.photoBase64,
-          photo.photoMimeType,
-          photo.photoFileName || "photo" + (i + 1) + ".jpg",
-          storeName,
-          staffName,
-        ),
+      urls[i] = uploadPhoto_(
+        photo.photoBase64,
+        photo.photoMimeType,
+        photo.photoFileName || "photo" + (i + 1) + ".jpg",
+        storeName,
+        staffName,
       );
     }
-    photoUrl = urls.join("\n");
   } else if (data.photoBase64 && data.photoMimeType) {
-    photoUrl = uploadPhoto_(
+    urls[0] = uploadPhoto_(
       data.photoBase64,
       data.photoMimeType,
       data.photoFileName || "photo.jpg",
@@ -315,16 +349,7 @@ function submitReport_(data) {
     );
   }
 
-  getReportSheet_().appendRow([
-    storeName,
-    staffName,
-    impression,
-    photoUrl,
-    healthRating,
-    formatNow_(),
-  ]);
-
-  return { success: true };
+  return urls;
 }
 
 function findStaffRow_(storeName, staffName) {
