@@ -121,12 +121,10 @@ function registerStaff_(data) {
     throw new Error("パスワードは6文字以上で入力してください");
   }
 
-  const nameOnlyRow = findNameOnlyStaffRow_(staffName);
-  if (nameOnlyRow) {
+  const setupRow = findStaffSetupRow_(staffName);
+  if (setupRow) {
     ensureStaffHeaders_();
-    const staffSheet = getStaffSheet_();
-    staffSheet.getRange(nameOnlyRow.rowIndex, 1).setValue(storeName);
-    staffSheet.getRange(nameOnlyRow.rowIndex, 3).setValue(password);
+    updateStaffRow_(setupRow.rowIndex, storeName, staffName, password);
     return {
       success: true,
       storeName: storeName,
@@ -139,7 +137,7 @@ function registerStaff_(data) {
     const stored = String(existing.passwordHash || "").trim();
     if (!stored) {
       ensureStaffHeaders_();
-      getStaffSheet_().getRange(existing.rowIndex, 3).setValue(password);
+      updateStaffRow_(existing.rowIndex, storeName, staffName, password);
       return {
         success: true,
         storeName: storeName,
@@ -330,53 +328,78 @@ function submitReport_(data) {
 }
 
 function findStaffRow_(storeName, staffName) {
-  const staffSheet = getStaffSheet_();
-  const values = staffSheet.getDataRange().getValues();
-
-  for (let i = 1; i < values.length; i++) {
-    const rowStore = String(values[i][0] || "").trim();
-    const rowName = String(values[i][1] || "").trim();
-    if (rowStore === storeName && rowName === staffName) {
-      return {
-        rowIndex: i + 1,
-        storeName: rowStore,
-        staffName: rowName,
-        passwordHash: String(values[i][2] || ""),
-      };
+  const rows = findStaffRowsByName_(staffName);
+  for (let i = 0; i < rows.length; i++) {
+    if (rows[i].storeName === storeName) {
+      return rows[i];
     }
   }
-
   return null;
 }
 
 function findStaffRowsByName_(staffName) {
+  const target = normalizeStaffName_(staffName);
   const staffSheet = getStaffSheet_();
-  const values = staffSheet.getDataRange().getValues();
+  const lastRow = staffSheet.getLastRow();
   const rows = [];
 
-  for (let i = 1; i < values.length; i++) {
-    const rowName = String(values[i][1] || "").trim();
-    if (rowName === staffName) {
-      rows.push({
-        rowIndex: i + 1,
-        storeName: String(values[i][0] || "").trim(),
-        staffName: rowName,
-        passwordHash: String(values[i][2] || ""),
-      });
+  for (let row = 2; row <= lastRow; row++) {
+    const rowName = normalizeStaffName_(staffSheet.getRange(row, 2).getValue());
+    if (rowName !== target) {
+      continue;
     }
+    rows.push({
+      rowIndex: row,
+      storeName: String(staffSheet.getRange(row, 1).getValue() || "").trim(),
+      staffName: rowName,
+      passwordHash: String(staffSheet.getRange(row, 3).getValue() || ""),
+    });
   }
 
   return rows;
 }
 
-function findNameOnlyStaffRow_(staffName) {
+function findStaffSetupRow_(staffName) {
   const rows = findStaffRowsByName_(staffName);
-  for (let i = 0; i < rows.length; i++) {
-    if (!rows[i].storeName) {
-      return rows[i];
-    }
+  const candidates = rows.filter(function (row) {
+    return !row.storeName || !String(row.passwordHash || "").trim();
+  });
+
+  if (candidates.length === 0) {
+    return null;
   }
-  return null;
+
+  const nameOnlyRows = candidates.filter(function (row) {
+    return !row.storeName;
+  });
+  if (nameOnlyRows.length > 0) {
+    return nameOnlyRows[nameOnlyRows.length - 1];
+  }
+
+  return candidates[candidates.length - 1];
+}
+
+function updateStaffRow_(rowIndex, storeName, staffName, password) {
+  const staffSheet = getStaffSheet_();
+  const actualName = normalizeStaffName_(staffSheet.getRange(rowIndex, 2).getValue());
+  if (actualName !== normalizeStaffName_(staffName)) {
+    throw new Error("登録先の行が一致しません。管理者にお問い合わせください。");
+  }
+
+  staffSheet.getRange(rowIndex, 1).setValue(storeName);
+  staffSheet.getRange(rowIndex, 3).setValue(password);
+
+  const registeredAt = String(staffSheet.getRange(rowIndex, 4).getValue() || "").trim();
+  if (!registeredAt) {
+    staffSheet.getRange(rowIndex, 4).setValue(formatNow_());
+  }
+}
+
+function normalizeStaffName_(name) {
+  return String(name || "")
+    .trim()
+    .replace(/\u3000/g, " ")
+    .replace(/\s+/g, " ");
 }
 
 function verifyStoredPassword_(password, stored) {

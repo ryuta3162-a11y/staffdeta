@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { FormEvent, useState } from "react";
+import { FormEvent, type ReactNode, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { GuestEyeLogoutButton } from "@/components/guest-eye/LogoutButton";
 import { StarRating } from "@/components/guest-eye/StarRating";
@@ -20,6 +20,31 @@ interface PhotoItem {
 }
 
 const MAX_PHOTOS = 5;
+
+function ReviewStep({
+  step,
+  title,
+  hint,
+  children,
+}: {
+  step: string;
+  title: string;
+  hint?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="guest-eye-review-section">
+      <div className="guest-eye-step-head">
+        <span className="guest-eye-step-badge">{step}</span>
+        <div>
+          <h2 className="guest-eye-review-label">{title}</h2>
+          {hint && <p className="guest-eye-review-hint">{hint}</p>}
+        </div>
+      </div>
+      <div className="guest-eye-step-body">{children}</div>
+    </section>
+  );
+}
 
 async function parseApiResponse(response: Response) {
   const text = await response.text();
@@ -111,7 +136,7 @@ export function GuestEyeReportForm({ storeName, staffName }: ReportFormProps) {
     setSuccess(false);
 
     if (healthRating < 1) {
-      setError("健康・達成感の評価を選択してください");
+      setError("星の評価をタップして選択してください");
       return;
     }
 
@@ -167,28 +192,27 @@ export function GuestEyeReportForm({ storeName, staffName }: ReportFormProps) {
       />
 
       <form onSubmit={handleSubmit} className="guest-eye-review-form">
-        <div className="guest-eye-review-section">
-          <p className="guest-eye-review-label">① お客様目線の気づき</p>
-          <p className="guest-eye-review-hint">
-            施設利用中の気づきをお客様目線で率直に書いてください。（清掃、設備の故障、スタッフの接客など・・・）
-          </p>
+        <ReviewStep
+          step="1"
+          title="お客様目線の気づき"
+          hint="施設利用中の気づきをお客様目線で率直に書いてください。（清掃、設備の故障、スタッフの接客など）"
+        >
           <textarea
             value={impression}
             onChange={(event) => setImpression(event.target.value)}
-            className="guest-eye-review-textarea field-input w-full"
+            className="guest-eye-review-textarea"
             placeholder="例：ストレッチエリア利用中に、スタッフの接客が丁寧で印象に残りました"
             required
           />
-        </div>
+        </ReviewStep>
 
-        <div className="guest-eye-review-section">
-          <p className="guest-eye-review-label">② 写真</p>
-          <p className="guest-eye-review-hint">
-            清掃や設備の不具合など、伝えたいことがあれば画像を添付してください
-          </p>
-
-          <div className="upload-actions mt-3">
-            <label className="upload-btn">
+        <ReviewStep
+          step="2"
+          title="写真"
+          hint="清掃や設備の不具合など、伝えたいことがあれば画像を添付してください"
+        >
+          <div className="guest-eye-upload-actions">
+            <label className="guest-eye-upload-btn">
               <input
                 type="file"
                 accept="image/*"
@@ -203,11 +227,11 @@ export function GuestEyeReportForm({ storeName, staffName }: ReportFormProps) {
                 }}
                 className="sr-only"
               />
-              <span className="upload-btn-title">カメラで撮影</span>
-              <span className="upload-btn-desc">1枚ずつ追加</span>
+              <span className="guest-eye-upload-btn-title">カメラで撮影</span>
+              <span className="guest-eye-upload-btn-desc">1枚ずつ追加</span>
             </label>
 
-            <label className="upload-btn">
+            <label className="guest-eye-upload-btn">
               <input
                 type="file"
                 accept="image/*"
@@ -221,20 +245,16 @@ export function GuestEyeReportForm({ storeName, staffName }: ReportFormProps) {
                 }}
                 className="sr-only"
               />
-              <span className="upload-btn-title">画像を添付</span>
-              <span className="upload-btn-desc">フォトから選択</span>
+              <span className="guest-eye-upload-btn-title">画像を添付</span>
+              <span className="guest-eye-upload-btn-desc">フォトから選択</span>
             </label>
           </div>
 
-          <p className="mt-3 text-center text-[0.8125rem] font-medium text-[var(--muted)]">
+          <p className="guest-eye-photo-count">
             最大{MAX_PHOTOS}枚（{photos.length}/{MAX_PHOTOS}）
           </p>
 
-          {photoLoading && (
-            <p className="mt-3 text-center text-[0.8125rem] text-[var(--muted)]">
-              写真を準備中...
-            </p>
-          )}
+          {photoLoading && <p className="guest-eye-photo-status">写真を準備中...</p>}
 
           {photos.length > 0 && (
             <div className="photo-grid mt-4">
@@ -260,27 +280,27 @@ export function GuestEyeReportForm({ storeName, staffName }: ReportFormProps) {
               ))}
             </div>
           )}
-        </div>
+        </ReviewStep>
 
-        <div className="guest-eye-review-section">
-          <p className="guest-eye-review-label">
-            ③ 施設の利用が達成感や健康づくりにどのくらい繋がっていますか？
-          </p>
+        <ReviewStep
+          step="3"
+          title="施設の利用が達成感や健康づくりにどのくらい繋がっていますか？"
+        >
           <StarRating
             value={healthRating}
             onChange={setHealthRating}
             disabled={loading}
             name="健康・達成感の評価"
           />
-        </div>
+        </ReviewStep>
 
-        {error && <p className="alert-error mx-5 mb-0 mt-5">{error}</p>}
-        {success && <p className="alert-success mx-5 mb-0 mt-5">送信しました。</p>}
+        {error && <p className="alert-error guest-eye-review-alert">{error}</p>}
+        {success && <p className="alert-success guest-eye-review-alert">送信しました。</p>}
 
         <button
           type="submit"
           disabled={loading || photoLoading}
-          className="guest-eye-review-submit btn-primary w-[calc(100%-2.5rem)]"
+          className="guest-eye-review-submit"
         >
           {loading ? "送信中..." : "投稿する"}
         </button>
