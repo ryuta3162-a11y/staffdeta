@@ -1,33 +1,42 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import {
+  type Dispatch,
+  type SetStateAction,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import {
   filterStores,
   getAreas,
   getTerritories,
   groupStoresByArea,
+  storeKey,
   territoryKey,
   type StoreRecord,
 } from "@/lib/guest-eye/stores";
 
 interface StorePickerProps {
   stores: StoreRecord[];
-  storeName: string;
+  selectedStores: string[];
   registeredStores?: string[];
-  onStoreChange: (storeName: string) => void;
+  onStoresChange: Dispatch<SetStateAction<string[]>>;
   disabled?: boolean;
 }
 
 export function StorePicker({
   stores,
-  storeName,
+  selectedStores,
   registeredStores = [],
-  onStoreChange,
+  onStoresChange,
   disabled,
 }: StorePickerProps) {
   const areas = useMemo(() => getAreas(stores), [stores]);
   const [selectedAreas, setSelectedAreas] = useState<Set<string>>(new Set());
-  const [selectedTerritories, setSelectedTerritories] = useState<Set<string>>(new Set());
+  const [selectedTerritories, setSelectedTerritories] = useState<Set<string>>(
+    new Set(),
+  );
   const [openAreas, setOpenAreas] = useState<Set<string>>(new Set());
 
   const visibleStores = useMemo(
@@ -40,13 +49,52 @@ export function StorePicker({
     [visibleStores],
   );
 
-  const groupedStores = useMemo(() => groupStoresByArea(visibleStores), [visibleStores]);
+  const groupedStores = useMemo(
+    () => groupStoresByArea(visibleStores),
+    [visibleStores],
+  );
+
+  const selectedSet = useMemo(() => new Set(selectedStores), [selectedStores]);
+
+  const visibleSelectedCount = useMemo(
+    () => selectedStores.filter((name) => visibleStoreNames.has(name)).length,
+    [selectedStores, visibleStoreNames],
+  );
 
   useEffect(() => {
-    if (storeName && !visibleStoreNames.has(storeName)) {
-      onStoreChange("");
+    onStoresChange((current) => {
+      const next = current.filter((name) => visibleStoreNames.has(name));
+      return next.length === current.length ? current : next;
+    });
+  }, [visibleStoreNames, onStoresChange]);
+
+  useEffect(() => {
+    if (selectedAreas.size === 0) {
+      return;
     }
-  }, [storeName, visibleStoreNames, onStoreChange]);
+
+    setOpenAreas((current) => {
+      const next = new Set(current);
+      for (const area of selectedAreas) {
+        next.add(area);
+      }
+      return next;
+    });
+  }, [selectedAreas]);
+
+  function toggleStore(store: StoreRecord) {
+    if (disabled) {
+      return;
+    }
+
+    const name = store.storeName;
+    onStoresChange((current) => {
+      if (current.includes(name)) {
+        return current.filter((item) => item !== name);
+      }
+      return [...current, name];
+    });
+  }
 
   function toggleArea(area: string) {
     if (disabled) {
@@ -84,7 +132,6 @@ export function StorePicker({
       }
       return next;
     });
-    onStoreChange("");
   }
 
   function toggleTerritory(area: string, territory: string) {
@@ -102,7 +149,6 @@ export function StorePicker({
       }
       return next;
     });
-    onStoreChange("");
   }
 
   function toggleAreaPanel(area: string) {
@@ -138,7 +184,9 @@ export function StorePicker({
 
       {selectedAreas.size > 0 && (
         <section>
-          <h3 className="store-filter-title">テリトリー（不要なものはタップして外す）</h3>
+          <h3 className="store-filter-title">
+            テリトリー（不要なものはタップして外す）
+          </h3>
           <div className="space-y-4">
             {[...selectedAreas].map((area) => (
               <div key={area}>
@@ -168,13 +216,13 @@ export function StorePicker({
       {visibleStores.length > 0 && (
         <section>
           <div className="store-filter-store-head">
-            <h3 className="store-filter-title">所属店舗を選択</h3>
+            <h3 className="store-filter-title">所属店舗を選択（複数選択可）</h3>
             <span className="store-filter-count">
-              {storeName ? "1" : "0"}/{visibleStores.length}
+              {visibleSelectedCount}/{visibleStores.length}
             </span>
           </div>
           <p className="store-filter-hint">
-            店舗が多い場合はエリアごとに開いて選択できます。
+            複数の店舗に所属している場合は、該当する店舗をすべてタップしてください。もう一度タップで解除できます。
           </p>
           <div className="space-y-3">
             {[...groupedStores.entries()].map(([area, areaStores]) => (
@@ -186,24 +234,35 @@ export function StorePicker({
                 >
                   <span>{area} の店舗</span>
                   <span className="store-filter-count">
-                    {areaStores.some((store) => store.storeName === storeName) ? 1 : 0}/
-                    {areaStores.length}
+                    {
+                      areaStores.filter((store) => selectedSet.has(store.storeName))
+                        .length
+                    }
+                    /{areaStores.length}
                   </span>
                 </button>
                 {openAreas.has(area) && (
                   <div className="store-filter-chips store-filter-chips--stores">
-                    {areaStores.map((store) => (
-                      <button
-                        key={`${area}-${store.territory}-${store.storeName}`}
-                        type="button"
-                        disabled={disabled}
-                        className={`store-filter-chip ${storeName === store.storeName ? "store-filter-chip--on" : ""}`}
-                        onClick={() => onStoreChange(store.storeName)}
-                      >
-                        {store.storeName}
-                        {registeredStores.includes(store.storeName) ? "（登録済）" : ""}
-                      </button>
-                    ))}
+                    {areaStores.map((store) => {
+                      const isSelected = selectedSet.has(store.storeName);
+                      return (
+                        <button
+                          key={storeKey(store)}
+                          type="button"
+                          disabled={disabled}
+                          className={`store-filter-chip ${isSelected ? "store-filter-chip--on" : ""}`}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            toggleStore(store);
+                          }}
+                        >
+                          {store.storeName}
+                          {registeredStores.includes(store.storeName)
+                            ? "（登録済）"
+                            : ""}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </div>

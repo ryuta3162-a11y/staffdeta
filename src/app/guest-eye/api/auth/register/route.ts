@@ -1,18 +1,6 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
-import { getSession } from "@/lib/guest-eye/auth";
-import {
-  registerPasswordField,
-  staffNameField,
-  storeNameField,
-} from "@/lib/guest-eye/authSchema";
+import { getSession } from "@/lib/guest-eye/auth";import { registerSchema } from "@/lib/guest-eye/authSchema";
 import { callGuestEyeGas } from "@/lib/guest-eye/gas";
-
-const registerSchema = z.object({
-  storeName: storeNameField,
-  staffName: staffNameField,
-  password: registerPasswordField,
-});
 
 export async function POST(request: Request) {
   try {
@@ -26,16 +14,18 @@ export async function POST(request: Request) {
       );
     }
 
-    const { storeName, staffName, password } = parsed.data;
+    const { storeName, storeNames, staffName, password } = parsed.data;
     const result = await callGuestEyeGas({
       action: "register",
       storeName,
+      storeNames,
       staffName,
       password,
     });
 
     const session = await getSession();
-    session.storeName = result.storeName || storeName.trim();
+    session.storeName =
+      result.storeName || storeNames?.[0] || storeName?.trim() || "";
     session.staffName = result.staffName || staffName.trim();
     session.isLoggedIn = true;
     await session.save();

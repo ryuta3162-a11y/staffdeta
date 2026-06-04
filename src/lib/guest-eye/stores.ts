@@ -4,9 +4,15 @@ export interface StoreRecord {
   storeName: string;
 }
 
-export function territoryKey(area: string, territory: string): string {
-  return `${area}::${territory}`;
+export function storeKey(store: StoreRecord): string {
+  return `${store.area}::${store.territory}::${store.storeName}`;
 }
+
+export function storeNameFromKey(key: string): string {
+  const parts = key.split("::");
+  return parts.slice(2).join("::");
+}
+
 
 export function parseTerritoryKey(key: string): { area: string; territory: string } {
   const [area, territory] = key.split("::");

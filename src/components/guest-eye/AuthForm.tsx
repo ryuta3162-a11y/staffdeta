@@ -18,7 +18,7 @@ interface LookupResult {
 
 export function GuestEyeAuthForm() {
   const [staffName, setStaffName] = useState("");
-  const [storeName, setStoreName] = useState("");
+  const [selectedStores, setSelectedStores] = useState<string[]>([]);
   const [password, setPassword] = useState("");
   const [stores, setStores] = useState<StoreRecord[]>([]);
   const [lookup, setLookup] = useState<LookupResult>({ status: "idle" });
@@ -149,18 +149,28 @@ export function GuestEyeAuthForm() {
       return;
     }
 
-    if (!storeName) {
-      setError("所属店舗を選択してください");
+    if (selectedStores.length === 0) {
+      setError("所属店舗を1つ以上選んでください");
       setLoading(false);
       return;
     }
 
+    const registeredSet = new Set(lookup.stores || []);
+    const hasUnregistered = selectedStores.some(
+      (store) => !registeredSet.has(store),
+    );
     const isRegister =
       lookup.status === "new" ||
       lookup.status === "needsSetup" ||
       lookup.status === "needsStore" ||
-      (lookup.status === "existing" &&
-        !(lookup.stores || []).includes(storeName));
+      hasUnregistered;
+
+    if (!isRegister && selectedStores.length !== 1) {
+      setError("ログインする店舗は1つだけ選んでください");
+      setLoading(false);
+      return;
+    }
+
     const authMode = isRegister ? "register" : "login";
 
     try {
@@ -168,7 +178,8 @@ export function GuestEyeAuthForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          storeName,
+          storeNames: isRegister ? selectedStores : undefined,
+          storeName: isRegister ? undefined : selectedStores[0],
           staffName: trimmedName,
           password,
         }),
@@ -226,9 +237,9 @@ export function GuestEyeAuthForm() {
             <>
               <StorePicker
                 stores={stores}
-                storeName={storeName}
+                selectedStores={selectedStores}
                 registeredStores={lookup.stores || []}
-                onStoreChange={setStoreName}
+                onStoresChange={setSelectedStores}
                 disabled={loading}
               />
 
@@ -272,15 +283,25 @@ export function GuestEyeAuthForm() {
         {showStoreFields && (
           <button
             type="submit"
-            disabled={loading || storesLoading || lookupLoading}
+            disabled={
+              loading ||
+              storesLoading ||
+              lookupLoading ||
+              selectedStores.length === 0
+            }
             className="btn-primary guest-eye-panel-submit"
           >
             {loading
               ? "処理中..."
               : lookup.status === "new" ||
                   lookup.status === "needsSetup" ||
-                  lookup.status === "needsStore"
-                ? "登録する"
+                  lookup.status === "needsStore" ||
+                  selectedStores.some(
+                    (store) => !(lookup.stores || []).includes(store),
+                  )
+                ? selectedStores.length > 1
+                  ? `${selectedStores.length}店舗を登録する`
+                  : "登録する"
                 : "ログイン"}
           </button>
         )}

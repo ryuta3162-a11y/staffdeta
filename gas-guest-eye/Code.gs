@@ -72,14 +72,14 @@ function getStaffSheet_() {
 }
 
 function registerStaff_(data) {
-  const storeName = String(data.storeName || "").trim();
+  const storeNames = normalizeStoreNames_(data);
   const staffName = String(data.staffName || "").trim();
-  const password = String(data.password || "");
+  let password = String(data.password || "");
 
-  if (!storeName || !staffName) {
+  if (storeNames.length === 0 || !staffName) {
     throw new Error("店舗名と名前を入力してください");
   }
-  validateStoreName_(storeName);
+
   if (password.length < 6) {
     const setupRow = findStaffSetupRow_(staffName);
     const savedPlain = setupRow
@@ -92,42 +92,76 @@ function registerStaff_(data) {
     }
   }
 
-  const setupRow = findStaffSetupRow_(staffName);
-  if (setupRow) {
-    updateStaffRow_(setupRow.rowIndex, storeName, staffName, password);
-    return {
-      success: true,
-      storeName: storeName,
-      staffName: staffName,
-    };
-  }
+  const registeredStores = [];
+  let setupRowUsed = false;
 
-  const existing = findStaffRow_(storeName, staffName);
-  if (existing) {
-    const stored = String(existing.passwordHash || "").trim();
-    if (!stored) {
-      updateStaffRow_(existing.rowIndex, storeName, staffName, password);
-      return {
-        success: true,
-        storeName: storeName,
-        staffName: staffName,
-      };
+  for (var i = 0; i < storeNames.length; i++) {
+    const storeName = storeNames[i];
+    validateStoreName_(storeName);
+
+    let setupRow = null;
+    if (!setupRowUsed) {
+      setupRow = findStaffSetupRow_(staffName);
     }
-    throw new Error("この店舗名・名前の組み合わせは既に登録されています");
-  }
 
-  getStaffSheet_().appendRow([
-    storeName,
-    staffName,
-    password,
-    formatNow_(),
-  ]);
+    if (setupRow) {
+      updateStaffRow_(setupRow.rowIndex, storeName, staffName, password);
+      setupRowUsed = true;
+      registeredStores.push(storeName);
+      continue;
+    }
+
+    const existing = findStaffRow_(storeName, staffName);
+    if (existing) {
+      const stored = String(existing.passwordHash || "").trim();
+      if (!stored) {
+        updateStaffRow_(existing.rowIndex, storeName, staffName, password);
+        registeredStores.push(storeName);
+        continue;
+      }
+      if (verifyStoredPassword_(password, stored)) {
+        registeredStores.push(storeName);
+        continue;
+      }
+      throw new Error("この店舗名・名前の組み合わせは既に登録されています");
+    }
+
+    getStaffSheet_().appendRow([
+      storeName,
+      staffName,
+      password,
+      formatNow_(),
+    ]);
+    registeredStores.push(storeName);
+  }
 
   return {
     success: true,
-    storeName: storeName,
+    storeName: registeredStores[0],
     staffName: staffName,
+    stores: registeredStores,
   };
+}
+
+function normalizeStoreNames_(data) {
+  var names = [];
+  if (data.storeNames && data.storeNames.length) {
+    names = data.storeNames;
+  } else if (data.storeName) {
+    names = [data.storeName];
+  }
+
+  var seen = {};
+  var unique = [];
+  for (var i = 0; i < names.length; i++) {
+    var name = String(names[i] || "").trim();
+    if (!name || seen[name]) {
+      continue;
+    }
+    seen[name] = true;
+    unique.push(name);
+  }
+  return unique;
 }
 
 function loginStaff_(data) {
