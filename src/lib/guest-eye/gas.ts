@@ -6,6 +6,7 @@ interface GasResponse {
   stores?: Array<{ area: string; territory: string; storeName: string }>;
   status?: string;
   message?: string;
+  savedPassword?: string;
 }
 
 export async function callGuestEyeGas(

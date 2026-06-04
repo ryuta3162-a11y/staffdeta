@@ -81,7 +81,15 @@ function registerStaff_(data) {
   }
   validateStoreName_(storeName);
   if (password.length < 6) {
-    throw new Error("パスワードは6文字以上で入力してください");
+    const setupRow = findStaffSetupRow_(staffName);
+    const savedPlain = setupRow
+      ? getPlainPassword_(setupRow.passwordHash)
+      : "";
+    if (savedPlain) {
+      password = savedPlain;
+    } else {
+      throw new Error("パスワードは6文字以上で入力してください");
+    }
   }
 
   const setupRow = findStaffSetupRow_(staffName);
@@ -162,25 +170,70 @@ function lookupStaff_(data) {
     return { success: true, status: "new" };
   }
 
-  const hasIncomplete = rows.some(function (row) {
-    return !row.storeName || !String(row.passwordHash || "").trim();
+  const completeRows = rows.filter(function (row) {
+    return row.storeName && String(row.passwordHash || "").trim();
   });
 
-  if (hasIncomplete) {
+  if (completeRows.length > 0) {
+    return {
+      success: true,
+      status: "existing",
+      stores: completeRows.map(function (row) {
+        return row.storeName;
+      }),
+    };
+  }
+
+  const savedPassword = findSavedPlainPassword_(rows);
+  const needsStore = rows.some(function (row) {
+    return !row.storeName && String(row.passwordHash || "").trim();
+  });
+  const needsPassword = rows.some(function (row) {
+    return !String(row.passwordHash || "").trim();
+  });
+
+  if (needsStore && savedPassword) {
+    return {
+      success: true,
+      status: "needsStore",
+      message: "所属店舗を選択してください",
+      savedPassword: savedPassword,
+    };
+  }
+
+  if (needsPassword) {
     return {
       success: true,
       status: "needsSetup",
-      message: "恐れ入りますが、所属店舗とパスワードを再度入力してください",
+      message: "恐れ入りますが、所属店舗とパスワードを入力してください",
+      savedPassword: savedPassword || "",
     };
   }
 
   return {
     success: true,
-    status: "existing",
-    stores: rows.map(function (row) {
-      return row.storeName;
-    }),
+    status: "needsStore",
+    message: "所属店舗を選択してください",
+    savedPassword: savedPassword || "",
   };
+}
+
+function findSavedPlainPassword_(rows) {
+  for (var i = 0; i < rows.length; i++) {
+    var plain = getPlainPassword_(rows[i].passwordHash);
+    if (plain) {
+      return plain;
+    }
+  }
+  return "";
+}
+
+function getPlainPassword_(stored) {
+  stored = String(stored || "").trim();
+  if (!stored || stored.indexOf(":") !== -1) {
+    return "";
+  }
+  return stored;
 }
 
 function getStoreData_() {

@@ -7,12 +7,13 @@ import { guestEyePaths } from "@/lib/guest-eye/paths";
 import { loadSavedAuth, saveSavedAuth } from "@/lib/guest-eye/savedLogin";
 import type { StoreRecord } from "@/lib/guest-eye/stores";
 
-type LookupStatus = "idle" | "new" | "needsSetup" | "existing";
+type LookupStatus = "idle" | "new" | "needsSetup" | "needsStore" | "existing";
 
 interface LookupResult {
   status: LookupStatus;
   message?: string;
   stores?: string[];
+  savedPassword?: string;
 }
 
 export function GuestEyeAuthForm() {
@@ -29,6 +30,7 @@ export function GuestEyeAuthForm() {
   const showStoreFields =
     lookup.status === "new" ||
     lookup.status === "needsSetup" ||
+    lookup.status === "needsStore" ||
     lookup.status === "existing";
 
   useEffect(() => {
@@ -102,10 +104,15 @@ export function GuestEyeAuthForm() {
       }
 
       setLookup({
-        status: data.status,
+        status: data.status as LookupStatus,
         message: data.message,
         stores: data.stores,
       });
+
+      if (data.savedPassword) {
+        setPassword(data.savedPassword);
+        saveSavedAuth({ staffName: trimmed, password: data.savedPassword });
+      }
     } catch (lookupError) {
       setLookup({ status: "idle" });
       setError(
@@ -151,6 +158,7 @@ export function GuestEyeAuthForm() {
     const isRegister =
       lookup.status === "new" ||
       lookup.status === "needsSetup" ||
+      lookup.status === "needsStore" ||
       (lookup.status === "existing" &&
         !(lookup.stores || []).includes(storeName));
     const authMode = isRegister ? "register" : "login";
@@ -209,7 +217,8 @@ export function GuestEyeAuthForm() {
             <p className="guest-eye-muted">確認中...</p>
           )}
 
-          {lookup.status === "needsSetup" && lookup.message && (
+          {(lookup.status === "needsSetup" || lookup.status === "needsStore") &&
+            lookup.message && (
             <p className="alert-info">{lookup.message}</p>
           )}
 
@@ -231,13 +240,17 @@ export function GuestEyeAuthForm() {
                   onChange={(event) => setPassword(event.target.value)}
                   className="field-input"
                   placeholder={
-                    lookup.status === "new" || lookup.status === "needsSetup"
+                    lookup.status === "new" ||
+                    lookup.status === "needsSetup" ||
+                    (lookup.status === "needsStore" && !password)
                       ? "6文字以上で設定"
                       : "パスワード"
                   }
                   autoComplete="off"
                   minLength={
-                    lookup.status === "new" || lookup.status === "needsSetup"
+                    lookup.status === "new" ||
+                    lookup.status === "needsSetup" ||
+                    (lookup.status === "needsStore" && !password)
                       ? 6
                       : 1
                   }
@@ -252,7 +265,7 @@ export function GuestEyeAuthForm() {
           )}
         </div>
 
-        {error && lookup.status !== "needsSetup" && (
+        {error && lookup.status !== "needsSetup" && lookup.status !== "needsStore" && (
           <p className="alert-error guest-eye-panel-alert">{error}</p>
         )}
 
@@ -264,7 +277,9 @@ export function GuestEyeAuthForm() {
           >
             {loading
               ? "処理中..."
-              : lookup.status === "new" || lookup.status === "needsSetup"
+              : lookup.status === "new" ||
+                  lookup.status === "needsSetup" ||
+                  lookup.status === "needsStore"
                 ? "登録する"
                 : "ログイン"}
           </button>
