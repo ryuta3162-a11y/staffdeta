@@ -40,7 +40,7 @@ export async function POST(request: Request) {
         action: "lookupStaff",
         staffName,
       });
-      if (lookup.status === "existing" && Array.isArray(lookup.stores)) {
+      if (Array.isArray(lookup.stores) && lookup.stores.length > 0) {
         registeredStores = lookup.stores as string[];
       }
     } catch {

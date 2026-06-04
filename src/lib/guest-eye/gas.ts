@@ -76,20 +76,17 @@ export async function registerGuestEyeStores(
     throw new Error("店舗を1つ以上選んでください");
   }
 
-  let lastResult: GasResponse = {};
-  for (const storeName of uniqueStores) {
-    lastResult = await callGuestEyeGas({
-      action: "register",
-      storeName,
-      staffName,
-      password,
-    });
-  }
+  const result = await callGuestEyeGas({
+    action: "register",
+    storeNames: uniqueStores,
+    staffName,
+    password,
+  });
 
   return {
-    ...lastResult,
-    storeName: uniqueStores[0],
-    staffName: lastResult.staffName || staffName,
-    stores: uniqueStores,
+    ...result,
+    storeName: result.storeName || uniqueStores[0],
+    staffName: result.staffName || staffName,
+    stores: (result.stores as string[] | undefined) || uniqueStores,
   };
 }

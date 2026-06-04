@@ -3,7 +3,7 @@
  *
  * スプレッドシートの1行目（ヘッダー）は管理者が手動で設定済みである前提。
  * 所感: A店舗名 B名前 C所感 D〜H写真1〜5 I健康・達成感 J送信日時
- * スタッフ: A店舗名 B名前 Cパスワード D登録日時
+ * スタッフ: A店舗名（複数は「, 」区切り） B名前 Cパスワード D登録日時
  * 店舗データ: Aエリア Bテリトリー C店舗名
  */
 
@@ -80,11 +80,13 @@ function registerStaff_(data) {
     throw new Error("店舗名と名前を入力してください");
   }
 
+  for (var i = 0; i < storeNames.length; i++) {
+    validateStoreName_(storeNames[i]);
+  }
+
   if (password.length < 6) {
-    const setupRow = findStaffSetupRow_(staffName);
-    const savedPlain = setupRow
-      ? getPlainPassword_(setupRow.passwordHash)
-      : "";
+    const profile = getStaffProfileByName_(staffName);
+    const savedPlain = profile ? getPlainPassword_(profile.passwordHash) : "";
     if (savedPlain) {
       password = savedPlain;
     } else {
@@ -92,54 +94,31 @@ function registerStaff_(data) {
     }
   }
 
-  const registeredStores = [];
-  let setupRowUsed = false;
+  var profile = getStaffProfileByName_(staffName);
+  var mergedStores = mergeStoreNames_(
+    profile ? profile.storeNames : [],
+    storeNames,
+  );
 
-  for (var i = 0; i < storeNames.length; i++) {
-    const storeName = storeNames[i];
-    validateStoreName_(storeName);
-
-    let setupRow = null;
-    if (!setupRowUsed) {
-      setupRow = findStaffSetupRow_(staffName);
-    }
-
-    if (setupRow) {
-      updateStaffRow_(setupRow.rowIndex, storeName, staffName, password);
-      setupRowUsed = true;
-      registeredStores.push(storeName);
-      continue;
-    }
-
-    const existing = findStaffRow_(storeName, staffName);
-    if (existing) {
-      const stored = String(existing.passwordHash || "").trim();
-      if (!stored) {
-        updateStaffRow_(existing.rowIndex, storeName, staffName, password);
-        registeredStores.push(storeName);
-        continue;
-      }
-      if (verifyStoredPassword_(password, stored)) {
-        registeredStores.push(storeName);
-        continue;
-      }
-      throw new Error("この店舗名・名前の組み合わせは既に登録されています");
-    }
-
+  if (!profile) {
     getStaffSheet_().appendRow([
-      storeName,
+      formatStoreNames_(mergedStores),
       staffName,
       password,
       formatNow_(),
     ]);
-    registeredStores.push(storeName);
+  } else {
+    var targetRow = findStaffSetupRow_(staffName);
+    var rowIndex = targetRow ? targetRow.rowIndex : profile.rowIndex;
+    updateStaffProfileRow_(rowIndex, mergedStores, staffName, password);
+    consolidateStaffRows_(staffName);
   }
 
   return {
     success: true,
-    storeName: registeredStores[0],
+    storeName: mergedStores[0] || "",
     staffName: staffName,
-    stores: registeredStores,
+    stores: mergedStores,
   };
 }
 
@@ -171,12 +150,13 @@ function loginStaff_(data) {
 
   validateStoreName_(storeName);
 
-  const row = findStaffRow_(storeName, staffName);
-  if (!row) {
+  consolidateStaffRows_(staffName);
+  const profile = getStaffProfileByName_(staffName);
+  if (!profile || profile.storeNames.indexOf(storeName) === -1) {
     throw new Error("店舗名・名前・パスワードが正しくありません");
   }
 
-  const storedPassword = String(row.passwordHash || "").trim();
+  const storedPassword = String(profile.passwordHash || "").trim();
   if (!storedPassword) {
     throw new Error(
       "恐れ入りますが、所属店舗とパスワードを再度入力してください",
@@ -188,8 +168,9 @@ function loginStaff_(data) {
 
   return {
     success: true,
-    storeName: row.storeName,
-    staffName: row.staffName,
+    storeName: storeName,
+    staffName: profile.staffName,
+    stores: profile.storeNames,
   };
 }
 
@@ -199,32 +180,26 @@ function lookupStaff_(data) {
     throw new Error("名前を入力してください");
   }
 
-  const rows = findStaffRowsByName_(staffName);
-  if (rows.length === 0) {
+  consolidateStaffRows_(staffName);
+  const profile = getStaffProfileByName_(staffName);
+  if (!profile) {
     return { success: true, status: "new" };
   }
 
-  const completeRows = rows.filter(function (row) {
-    return row.storeName && String(row.passwordHash || "").trim();
-  });
+  const hasStores = profile.storeNames.length > 0;
+  const hasPassword = String(profile.passwordHash || "").trim().length > 0;
 
-  if (completeRows.length > 0) {
+  if (hasStores && hasPassword) {
     return {
       success: true,
       status: "existing",
-      stores: completeRows.map(function (row) {
-        return row.storeName;
-      }),
+      stores: profile.storeNames,
     };
   }
 
-  const savedPassword = findSavedPlainPassword_(rows);
-  const needsStore = rows.some(function (row) {
-    return !row.storeName && String(row.passwordHash || "").trim();
-  });
-  const needsPassword = rows.some(function (row) {
-    return !String(row.passwordHash || "").trim();
-  });
+  const savedPassword = getPlainPassword_(profile.passwordHash);
+  const needsStore = !hasStores && hasPassword;
+  const needsPassword = !hasPassword;
 
   if (needsStore && savedPassword) {
     return {
@@ -376,13 +351,17 @@ function collectPhotoUrls_(data, storeName, staffName) {
 }
 
 function findStaffRow_(storeName, staffName) {
-  const rows = findStaffRowsByName_(staffName);
-  for (let i = 0; i < rows.length; i++) {
-    if (rows[i].storeName === storeName) {
-      return rows[i];
-    }
+  const profile = getStaffProfileByName_(staffName);
+  if (!profile || profile.storeNames.indexOf(storeName) === -1) {
+    return null;
   }
-  return null;
+  return {
+    rowIndex: profile.rowIndex,
+    storeName: storeName,
+    staffName: profile.staffName,
+    passwordHash: profile.passwordHash,
+    storeNames: profile.storeNames,
+  };
 }
 
 function findStaffRowsByName_(staffName) {
@@ -396,9 +375,11 @@ function findStaffRowsByName_(staffName) {
     if (rowName !== target) {
       continue;
     }
+    const storeCell = String(staffSheet.getRange(row, 1).getValue() || "").trim();
     rows.push({
       rowIndex: row,
-      storeName: String(staffSheet.getRange(row, 1).getValue() || "").trim(),
+      storeName: storeCell,
+      storeNames: parseStoreNames_(storeCell),
       staffName: rowName,
       passwordHash: String(staffSheet.getRange(row, 3).getValue() || ""),
     });
@@ -407,40 +388,143 @@ function findStaffRowsByName_(staffName) {
   return rows;
 }
 
+function getStaffProfileByName_(staffName) {
+  const rows = findStaffRowsByName_(staffName);
+  if (rows.length === 0) {
+    return null;
+  }
+
+  var allStores = [];
+  var seen = {};
+  var passwordHash = "";
+  var primaryRowIndex = rows[0].rowIndex;
+
+  for (var i = 0; i < rows.length; i++) {
+    if (rows[i].rowIndex < primaryRowIndex) {
+      primaryRowIndex = rows[i].rowIndex;
+    }
+    for (var j = 0; j < rows[i].storeNames.length; j++) {
+      var store = rows[i].storeNames[j];
+      if (!seen[store]) {
+        seen[store] = true;
+        allStores.push(store);
+      }
+    }
+    if (!passwordHash && String(rows[i].passwordHash || "").trim()) {
+      passwordHash = String(rows[i].passwordHash || "").trim();
+    }
+  }
+
+  return {
+    rowIndex: primaryRowIndex,
+    staffName: normalizeStaffName_(staffName),
+    storeNames: allStores,
+    storeName: formatStoreNames_(allStores),
+    passwordHash: passwordHash,
+  };
+}
+
+function consolidateStaffRows_(staffName) {
+  const rows = findStaffRowsByName_(staffName);
+  if (rows.length <= 1) {
+    return getStaffProfileByName_(staffName);
+  }
+
+  const profile = getStaffProfileByName_(staffName);
+  if (!profile) {
+    return null;
+  }
+
+  updateStaffProfileRow_(
+    profile.rowIndex,
+    profile.storeNames,
+    profile.staffName,
+    profile.passwordHash || "",
+  );
+
+  const staffSheet = getStaffSheet_();
+  var toDelete = [];
+  for (var i = 0; i < rows.length; i++) {
+    if (rows[i].rowIndex !== profile.rowIndex) {
+      toDelete.push(rows[i].rowIndex);
+    }
+  }
+  toDelete.sort(function (a, b) {
+    return b - a;
+  });
+  for (var d = 0; d < toDelete.length; d++) {
+    staffSheet.deleteRow(toDelete[d]);
+  }
+
+  return getStaffProfileByName_(staffName);
+}
+
+function parseStoreNames_(value) {
+  var text = String(value || "").trim();
+  if (!text) {
+    return [];
+  }
+
+  var parts = text.split(/[,、\n]/);
+  var seen = {};
+  var result = [];
+  for (var i = 0; i < parts.length; i++) {
+    var name = String(parts[i] || "").trim();
+    if (name && !seen[name]) {
+      seen[name] = true;
+      result.push(name);
+    }
+  }
+  return result;
+}
+
+function formatStoreNames_(storeNames) {
+  return storeNames.join(", ");
+}
+
+function mergeStoreNames_(existingNames, newNames) {
+  var merged = (existingNames || []).slice();
+  for (var i = 0; i < newNames.length; i++) {
+    if (merged.indexOf(newNames[i]) === -1) {
+      merged.push(newNames[i]);
+    }
+  }
+  return merged;
+}
+
 function findStaffSetupRow_(staffName) {
   const rows = findStaffRowsByName_(staffName);
   const candidates = rows.filter(function (row) {
-    return !row.storeName || !String(row.passwordHash || "").trim();
+    return (
+      row.storeNames.length === 0 || !String(row.passwordHash || "").trim()
+    );
   });
 
   if (candidates.length === 0) {
     return null;
   }
 
-  const nameOnlyRows = candidates.filter(function (row) {
-    return !row.storeName;
-  });
-  if (nameOnlyRows.length > 0) {
-    return nameOnlyRows[nameOnlyRows.length - 1];
-  }
-
   return candidates[candidates.length - 1];
 }
 
-function updateStaffRow_(rowIndex, storeName, staffName, password) {
+function updateStaffProfileRow_(rowIndex, storeNames, staffName, password) {
   const staffSheet = getStaffSheet_();
   const actualName = normalizeStaffName_(staffSheet.getRange(rowIndex, 2).getValue());
   if (actualName !== normalizeStaffName_(staffName)) {
     throw new Error("登録先の行が一致しません。管理者にお問い合わせください。");
   }
 
-  staffSheet.getRange(rowIndex, 1).setValue(storeName);
+  staffSheet.getRange(rowIndex, 1).setValue(formatStoreNames_(storeNames));
   staffSheet.getRange(rowIndex, 3).setValue(password);
 
   const registeredAt = String(staffSheet.getRange(rowIndex, 4).getValue() || "").trim();
   if (!registeredAt) {
     staffSheet.getRange(rowIndex, 4).setValue(formatNow_());
   }
+}
+
+function updateStaffRow_(rowIndex, storeName, staffName, password) {
+  updateStaffProfileRow_(rowIndex, [storeName], staffName, password);
 }
 
 function normalizeStaffName_(name) {
