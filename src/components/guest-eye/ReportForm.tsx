@@ -207,7 +207,7 @@ export function GuestEyeReportForm({ storeName, staffName }: ReportFormProps) {
         <FormSection
           step="2"
           title="写真"
-          hint="清掃や設備の不具合など、伝えたいことがあれば画像を添付してください"
+          hint="画像を添付してください"
         >
           <div className="upload-actions">
             <label className="upload-btn">
