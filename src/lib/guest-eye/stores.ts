@@ -7,6 +7,43 @@ export interface StoreRecord {
 /** 社員向けプログラム（店舗データ・スタッフ登録と同じ名称） */
 export const EMPLOYEE_PROGRAM_STORE = "社員向けプログラム";
 
+export function isEmployeeProgramName(name: string): boolean {
+  return name === EMPLOYEE_PROGRAM_STORE;
+}
+
+export function isEmployeeProgramArea(area: string): boolean {
+  return area === EMPLOYEE_PROGRAM_STORE;
+}
+
+export function areaPickerSectionTitle(area: string): string {
+  if (isEmployeeProgramArea(area)) {
+    return "社員向けプログラムを追加";
+  }
+  return `${area} の店舗`;
+}
+
+export function formatRegistrationSummary(selectedStores: string[]): string {
+  if (selectedStores.length === 0) {
+    return "まだ選択されていません";
+  }
+
+  const storeCount = selectedStores.filter((name) => !isEmployeeProgramName(name))
+    .length;
+  const hasProgram = selectedStores.some(isEmployeeProgramName);
+
+  if (storeCount === 0 && hasProgram) {
+    return "社員向けプログラムを追加します";
+  }
+  if (storeCount > 0 && hasProgram) {
+    const storePart = storeCount === 1 ? "1店舗" : `${storeCount}店舗`;
+    return `${storePart}・社員向けプログラムで登録します`;
+  }
+  if (storeCount === 1) {
+    return "1店舗で登録します";
+  }
+  return `${storeCount}店舗で登録します`;
+}
+
 export function storeKey(store: StoreRecord): string {
   return `${store.area}::${store.territory}::${store.storeName}`;
 }

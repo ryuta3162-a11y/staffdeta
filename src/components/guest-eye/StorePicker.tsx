@@ -9,6 +9,10 @@ import {
   useState,
 } from "react";
 import {
+  areaPickerSectionTitle,
+  EMPLOYEE_PROGRAM_STORE,
+  formatRegistrationSummary,
+  isEmployeeProgramArea,
   filterStores,
   findStoresByNames,
   getAreas,
@@ -196,22 +200,26 @@ export function StorePicker({
     });
   }
 
-  const selectionLabel =
-    selectedStores.length === 0
-      ? "まだ選択されていません"
-      : selectedStores.length === 1
-        ? "1店舗で登録します"
-        : `${selectedStores.length}店舗で登録します`;
+  const selectionLabel = formatRegistrationSummary(selectedStores);
+  const hasEmployeeProgramSelected = selectedStores.some(
+    (name) => name === EMPLOYEE_PROGRAM_STORE,
+  );
+  const regularAreas = [...selectedAreas].filter(
+    (area) => !isEmployeeProgramArea(area),
+  );
 
   return (
     <div className="store-filter space-y-5">
       <section className="store-filter-selection-box">
         <div className="store-filter-store-head">
-          <h3 className="store-filter-title">登録する店舗</h3>
+          <h3 className="store-filter-title">登録する店舗・プログラム</h3>
           <span className="store-filter-count">{selectionLabel}</span>
         </div>
         <p className="store-filter-hint">
-          青いボタンが登録対象です。もう一度タップすると解除できます。店舗を減らしたい場合も、青を外してから保存してください。
+          青いボタンが登録対象です。もう一度タップすると解除できます。
+          {hasEmployeeProgramSelected
+            ? "社員向けプログラムは店舗ではなく、別枠の参加登録です。"
+            : "店舗を減らしたい場合も、青を外してから保存してください。"}
         </p>
         {selectedStores.length > 0 ? (
           <div className="store-filter-chips mt-3">
@@ -252,13 +260,13 @@ export function StorePicker({
         </div>
       </section>
 
-      {selectedAreas.size > 0 && (
+      {regularAreas.length > 0 && (
         <section>
           <h3 className="store-filter-title">
             テリトリー（不要なものはタップして外す）
           </h3>
           <div className="space-y-4">
-            {[...selectedAreas].map((area) => (
+            {regularAreas.map((area) => (
               <div key={area}>
                 <p className="store-filter-group-label">{area}</p>
                 <div className="store-filter-chips">
@@ -286,7 +294,11 @@ export function StorePicker({
       {visibleStores.length > 0 && (
         <section>
           <div className="store-filter-store-head">
-            <h3 className="store-filter-title">店舗一覧（タップで選択・解除）</h3>
+            <h3 className="store-filter-title">
+              {hasEmployeeProgramSelected
+                ? "店舗・プログラム一覧（タップで選択・解除）"
+                : "店舗一覧（タップで選択・解除）"}
+            </h3>
             <span className="store-filter-count">
               表示中 {visibleSelectedCount}/{visibleStores.length}
             </span>
@@ -299,7 +311,7 @@ export function StorePicker({
                   className="store-filter-accordion-head"
                   onClick={() => toggleAreaPanel(area)}
                 >
-                  <span>{area} の店舗</span>
+                  <span>{areaPickerSectionTitle(area)}</span>
                   <span className="store-filter-count">
                     {
                       areaStores.filter((store) => selectedSet.has(store.storeName))
