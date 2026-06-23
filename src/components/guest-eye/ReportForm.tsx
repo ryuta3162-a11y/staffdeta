@@ -1,12 +1,16 @@
 "use client";
 
 import Image from "next/image";
-import { FormEvent, type ReactNode, useState } from "react";
+import { FormEvent, type ReactNode, useMemo, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { GuestEyeLogoutButton } from "@/components/guest-eye/LogoutButton";
 import { StarRating } from "@/components/guest-eye/StarRating";
 import { compressImage } from "@/lib/compressImage";
 import { guestEyePaths } from "@/lib/guest-eye/paths";
+import {
+  EMPLOYEE_PROGRAM_STORE,
+  mergeReportStoreOptions,
+} from "@/lib/guest-eye/stores";
 
 interface ReportFormProps {
   storeName: string;
@@ -65,7 +69,13 @@ export function GuestEyeReportForm({
   storeNames,
   staffName,
 }: ReportFormProps) {
-  const [activeStore, setActiveStore] = useState(storeName || storeNames[0] || "");
+  const postableStores = useMemo(
+    () => mergeReportStoreOptions(storeNames),
+    [storeNames],
+  );
+  const defaultStore =
+    postableStores.includes(storeName) ? storeName : postableStores[0] || "";
+  const [activeStore, setActiveStore] = useState(defaultStore);
   const [impression, setImpression] = useState("");
   const [healthRating, setHealthRating] = useState(0);
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
@@ -196,26 +206,25 @@ export function GuestEyeReportForm({
         action={<GuestEyeLogoutButton />}
       />
 
-      {storeNames.length > 1 && (
-        <section className="guest-eye-panel mb-4">
-          <h3 className="store-filter-title">投稿する店舗</h3>
-          <p className="store-filter-hint mb-3">
-            登録済みの店舗を切り替えて、店舗ごとに所感を送信できます。
-          </p>
-          <div className="store-filter-chips">
-            {storeNames.map((name) => (
-              <button
-                key={name}
-                type="button"
-                className={`store-filter-chip ${activeStore === name ? "store-filter-chip--on" : ""}`}
-                onClick={() => setActiveStore(name)}
-              >
-                {name}
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
+      <section className="guest-eye-panel mb-4">
+        <h3 className="store-filter-title">投稿する店舗</h3>
+        <p className="store-filter-hint mb-3">
+          投稿先を選んでから所感を送信してください。社員向けプログラムの気づきは「
+          {EMPLOYEE_PROGRAM_STORE}」を選んでください。
+        </p>
+        <div className="store-filter-chips">
+          {postableStores.map((name) => (
+            <button
+              key={name}
+              type="button"
+              className={`store-filter-chip ${activeStore === name ? "store-filter-chip--on" : ""}`}
+              onClick={() => setActiveStore(name)}
+            >
+              {name}
+            </button>
+          ))}
+        </div>
+      </section>
 
       <form onSubmit={handleSubmit} className="guest-eye-panel">
         <FormSection
