@@ -4,29 +4,8 @@ export interface StoreRecord {
   storeName: string;
 }
 
-/** 所感投稿先として常に選べる店舗（登録店舗とは別軸で追加） */
+/** 社員向けプログラム（店舗データ・スタッフ登録と同じ名称） */
 export const EMPLOYEE_PROGRAM_STORE = "社員向けプログラム";
-
-/** ログイン中の登録店舗 + 社員向けプログラム（重複なし） */
-export function mergeReportStoreOptions(registeredStores: string[]): string[] {
-  const merged = registeredStores.map((name) => name.trim()).filter(Boolean);
-  if (!merged.includes(EMPLOYEE_PROGRAM_STORE)) {
-    merged.push(EMPLOYEE_PROGRAM_STORE);
-  }
-  return merged;
-}
-
-export function resolveReportStoreName(
-  requestedStore: string,
-  registeredStores: string[],
-): string {
-  const allowed = mergeReportStoreOptions(registeredStores);
-  const trimmed = requestedStore.trim();
-  if (trimmed && allowed.includes(trimmed)) {
-    return trimmed;
-  }
-  return registeredStores[0] || EMPLOYEE_PROGRAM_STORE;
-}
 
 export function storeKey(store: StoreRecord): string {
   return `${store.area}::${store.territory}::${store.storeName}`;

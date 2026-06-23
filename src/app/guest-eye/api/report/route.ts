@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/guest-eye/auth";
 import { callGuestEyeGas } from "@/lib/guest-eye/gas";
-import { resolveReportStoreName } from "@/lib/guest-eye/stores";
 
 const MAX_PHOTOS = 5;
 
@@ -14,13 +13,15 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const requestedStore = String(formData.get("storeName") || "").trim();
-    const registeredStores =
+    const allowedStores =
       session.storeNames?.length > 0
         ? session.storeNames
         : session.storeName
           ? [session.storeName]
           : [];
-    const storeName = resolveReportStoreName(requestedStore, registeredStores);
+    const storeName = allowedStores.includes(requestedStore)
+      ? requestedStore
+      : session.storeName;
 
     if (!storeName) {
       return NextResponse.json(
