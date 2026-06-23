@@ -14,6 +14,15 @@ const CONFIG = {
   MAX_PHOTO_COLUMNS: 5,
 };
 
+/** 店舗データシートに無くても選択肢に出す店舗（シート行と重複時はシート優先） */
+const SUPPLEMENTAL_STORES = [
+  {
+    area: "社員向けプログラム",
+    territory: "社員向けプログラム",
+    storeName: "社員向けプログラム",
+  },
+];
+
 function doGet() {
   return ContentService.createTextOutput("Guest Eye API is running.");
 }
@@ -266,7 +275,23 @@ function getStoreData_() {
     throw new Error("店舗データが登録されていません");
   }
 
+  mergeSupplementalStores_(stores);
+
   return { success: true, stores: stores };
+}
+
+function mergeSupplementalStores_(stores) {
+  var existing = {};
+  for (var i = 0; i < stores.length; i++) {
+    existing[stores[i].storeName] = true;
+  }
+  for (var j = 0; j < SUPPLEMENTAL_STORES.length; j++) {
+    var extra = SUPPLEMENTAL_STORES[j];
+    if (!existing[extra.storeName]) {
+      stores.push(extra);
+      existing[extra.storeName] = true;
+    }
+  }
 }
 
 function getValidStoreNames_() {
