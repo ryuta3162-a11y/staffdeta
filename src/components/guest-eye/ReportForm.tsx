@@ -198,13 +198,15 @@ export function GuestEyeReportForm({
         action={<GuestEyeLogoutButton />}
       />
 
-      {storeNames.length > 1 && (
+      {storeNames.length > 0 && (
         <section className="guest-eye-panel mb-4">
           <h3 className="store-filter-title">投稿する店舗</h3>
           <p className="store-filter-hint mb-3">
             {hasEmployeeProgram
-              ? `登録済みの店舗を切り替えて投稿できます。${EMPLOYEE_PROGRAM_STORE}の気づきは「${EMPLOYEE_PROGRAM_STORE}」を選んでください。`
-              : "登録済みの店舗を切り替えて、店舗ごとに所感を送信できます。"}
+              ? `投稿先を選んでから送信してください。${EMPLOYEE_PROGRAM_STORE}の気づきは「${EMPLOYEE_PROGRAM_STORE}」を選んでください。`
+              : storeNames.length > 1
+                ? "登録済みの店舗を切り替えて、店舗ごとに所感を送信できます。"
+                : "この店舗宛に所感を送信します。"}
           </p>
           <div className="store-filter-chips">
             {storeNames.map((name) => (
