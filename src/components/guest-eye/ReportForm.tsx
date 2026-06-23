@@ -209,13 +209,9 @@ export function GuestEyeReportForm({
         <section className="guest-eye-panel mb-4">
           <h3 className="store-filter-title">{postTargetTitle}</h3>
           <p className="store-filter-hint mb-3">
-            {onlyEmployeeProgram
-              ? "社員向けプログラムの気づきを送信します。"
-              : hasEmployeeProgram
-                ? `投稿先を選んでから送信してください。${EMPLOYEE_PROGRAM_STORE}の気づきは「${EMPLOYEE_PROGRAM_STORE}」を選んでください。`
-                : storeNames.length > 1
-                  ? "登録済みの店舗を切り替えて、店舗ごとに所感を送信できます。"
-                  : "この店舗宛に所感を送信します。"}
+            {storeNames.length > 1
+              ? "投稿先を選んでから送信してください"
+              : "この店舗宛に所感を送信します。"}
           </p>
           <div className="store-filter-chips">
             {storeNames.map((name) => (
